@@ -658,6 +658,26 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* Стили для футера */
+        .footer {
+            margin-top: 16px;
+            padding: 12px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer a:hover {
+            color: var(--hover-color);
+        }
     </style>
 </head>
 <body>
@@ -731,6 +751,10 @@
             </div>
             <div id="savedRids"></div>
         </div>
+    </div>
+
+    <div class="footer">
+        Created by <a href="https://t.me/Kravchenk0_official" target="_blank">@Kravchenk0_official</a>
     </div>
 
     <div class="resize-handle"></div>
