@@ -7,9 +7,12 @@
     "storage",
     "activeTab",
     "scripting",
-    "notifications",
     "alarms",
-    "tabs"
+    "tabs",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://raw.githubusercontent.com/*"
   ],
   "action": {
     "default_popup": "popup.html"
@@ -25,7 +28,6 @@
     }
   ],
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   }
 } 

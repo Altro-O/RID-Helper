@@ -637,8 +637,12 @@ document.head.appendChild(style);
 
 // Проверяем наличие обновления при открытии
 chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
-    if (updateInfo) {
-        showUpdateDialog(updateInfo);
+    if (updateInfo && updateInfo.showNotification) {
+        const notification = document.getElementById('updateNotification');
+        notification.style.display = 'block';
+        notification.addEventListener('click', () => {
+            chrome.tabs.create({ url: updateInfo.downloadUrl });
+        });
     }
 });
 
