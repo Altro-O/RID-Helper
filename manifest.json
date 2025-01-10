@@ -1,12 +1,14 @@
 {
   "manifest_version": 3,
   "name": "RID Helper",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "Помощник для работы с RID и поиска по базе проблем",
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "alarms",
+    "notifications"
   ],
   "action": {
     "default_popup": "popup.html"
@@ -20,5 +22,10 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "update_url": "https://raw.githubusercontent.com/Altro-O/RID-Helper/main/updates.xml"
 } 

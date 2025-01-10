@@ -577,4 +577,60 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateResultsCount() {
     const visibleProblems = document.querySelectorAll('.problem-item[style*="display: block"]').length;
     document.getElementById('resultsCount').textContent = `Найдено: ${visibleProblems}`;
-} 
+}
+
+// Обработка сообщений об обновлениях
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'updateAvailable') {
+        showUpdateNotification(message.version);
+    }
+    // ... existing message handling code ...
+});
+
+function showUpdateNotification(version) {
+    const header = document.querySelector('.header');
+    if (!header.querySelector('.update-notification')) {
+        const notification = document.createElement('div');
+        notification.className = 'update-notification';
+        notification.innerHTML = `
+            <span>Доступна новая версия ${version}</span>
+            <button class="update-button">Обновить</button>
+        `;
+        header.appendChild(notification);
+
+        notification.querySelector('.update-button').addEventListener('click', () => {
+            chrome.runtime.requestUpdateCheck();
+        });
+    }
+}
+
+// Добавляем стили для уведомления об обновлении
+const style = document.createElement('style');
+style.textContent = `
+    .update-notification {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        background: #fef3c7;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #92400e;
+    }
+
+    .update-button {
+        padding: 2px 8px;
+        background: #f59e0b;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: background 0.2s;
+    }
+
+    .update-button:hover {
+        background: #d97706;
+    }
+`;
+document.head.appendChild(style); 
