@@ -3,6 +3,32 @@ let currentFilter = '';
 let isInserting = false;
 let shouldCancelInsertion = false;
 
+// Инициализация настроек
+document.addEventListener('DOMContentLoaded', () => {
+    const settingsButton = document.getElementById('settingsButton');
+    const settingsPanel = document.querySelector('.settings-panel');
+    const settingsClose = document.querySelector('.settings-close');
+
+    if (settingsButton && settingsPanel && settingsClose) {
+        settingsButton.addEventListener('click', () => {
+            settingsPanel.classList.add('active');
+        });
+
+        settingsClose.addEventListener('click', () => {
+            settingsPanel.classList.remove('active');
+        });
+
+        // Закрытие при клике вне панели
+        document.addEventListener('click', (e) => {
+            if (settingsPanel.classList.contains('active') && 
+                !settingsPanel.contains(e.target) && 
+                !settingsButton.contains(e.target)) {
+                settingsPanel.classList.remove('active');
+            }
+        });
+    }
+});
+
 // Статистика использования
 class UsageStats {
     constructor() {
@@ -458,18 +484,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab) {
-            alert('Не удалось получить активную вкладку');
-            return;
-        }
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) {
+        alert('Не удалось получить активную вкладку');
+        return;
+      }
 
-        const { rids } = await chrome.storage.local.get('rids');
-        
-        if (!rids || rids.length === 0) {
-            alert('Нет сохраненных RID значений');
-            return;
-        }
+      const { rids } = await chrome.storage.local.get('rids');
+      
+      if (!rids || rids.length === 0) {
+        alert('Нет сохраненных RID значений');
+        return;
+      }
 
         isInserting = true;
         shouldCancelInsertion = false;
@@ -486,24 +512,24 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Добавляем время начала
         const startTime = Date.now();
-        
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            func: async (ridsArray) => {
-                const inputs = document.querySelectorAll('input.input-element');
-                const input = Array.from(inputs).find(input => {
-                    const prevLabel = input.previousElementSibling;
-                    return prevLabel && prevLabel.textContent.toLowerCase().includes('rid');
-                }) || inputs[2];
+      
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: async (ridsArray) => {
+          const inputs = document.querySelectorAll('input.input-element');
+          const input = Array.from(inputs).find(input => {
+            const prevLabel = input.previousElementSibling;
+            return prevLabel && prevLabel.textContent.toLowerCase().includes('rid');
+          }) || inputs[2];
 
-                if (!input) {
+          if (!input) {
                     throw new Error('Не найдено поле для вставки RID значений');
-                }
+          }
 
                 let insertedCount = 0;
                 let errorCount = 0;
                 
-                for (const rid of ridsArray) {
+          for (const rid of ridsArray) {
                     // Проверяем флаг отмены
                     const shouldCancel = await new Promise(resolve => {
                         chrome.runtime.sendMessage({ type: 'checkCancellation' }, response => {
@@ -516,15 +542,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
 
                     try {
-                        input.value = '';
-                        input.dispatchEvent(new Event('input', { bubbles: true }));
-                        input.value = rid;
-                        
-                        ['input', 'change'].forEach(eventName => {
+            input.value = '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.value = rid;
+            
+            ['input', 'change'].forEach(eventName => {
                             input.dispatchEvent(new Event(eventName, { bubbles: true }));
-                        });
+            });
 
-                        const enterKeyEvents = [
+            const enterKeyEvents = [
                             new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }),
                             new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }),
                             new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true })
@@ -547,12 +573,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         currentRid: rid
                     });
 
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
 
                 return { insertedCount, errorCount };
-            },
-            args: [rids]
+        },
+        args: [rids]
         }).then(results => {
             const { insertedCount: current, errorCount: errors } = results[0].result;
             const total = rids.length;
@@ -579,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             
             // Очищаем поле ввода и сохраненные RID
-            ridInput.value = '';
+      ridInput.value = '';
             chrome.storage.local.remove(['inputText', 'rids']);
             
             // Увеличиваем время отображения до 40 секунд
@@ -590,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 40000); // 40 секунд
         });
     } catch (error) {
-        console.error('Ошибка:', error);
+      console.error('Ошибка:', error);
         progressText.innerHTML = `
             <div class="progress-info">
                 <span class="progress-status error">Ошибка: ${error.message}</span>
