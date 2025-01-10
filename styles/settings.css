@@ -23,21 +23,29 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: var(--primary-color);
+    color: white;
 }
 
 .settings-header h2 {
     margin: 0;
     font-size: 18px;
-    color: var(--text-color);
+    font-weight: 500;
 }
 
 .settings-close {
     background: none;
     border: none;
     font-size: 20px;
-    color: var(--text-color);
+    color: white;
     cursor: pointer;
     padding: 4px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.settings-close:hover {
+    opacity: 1;
 }
 
 .settings-content {
@@ -48,12 +56,30 @@
 
 .settings-section {
     margin-bottom: 24px;
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    animation: slideIn 0.3s ease-out;
 }
 
 .settings-section h3 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
+    margin: 0 0 16px 0;
+    font-size: 15px;
     color: var(--text-color);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-section h3::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 16px;
+    background: var(--primary-color);
+    border-radius: 2px;
 }
 
 /* Элементы управления текстом */
@@ -108,4 +134,300 @@
     text-align: center;
     font-size: 14px;
     color: var(--text-color);
+}
+
+/* Управление размером окна */
+.window-size-presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.preset-button {
+    min-width: 0;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: auto;
+}
+
+.preset-button:hover {
+    background: var(--secondary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.preset-button.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.window-size-custom {
+    margin-bottom: 16px;
+}
+
+.size-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    background: white;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.size-input-group input {
+    width: 80px;
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.size-input-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+}
+
+.size-separator {
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.apply-size-button {
+    width: 100%;
+    padding: 10px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.apply-size-button:hover {
+    background: var(--hover-color);
+    transform: translateY(-1px);
+}
+
+.apply-size-button:active {
+    transform: translateY(0);
+}
+
+.apply-size-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.size-recommendations {
+    background: #fff;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+}
+
+.size-tip {
+    margin: 0 0 12px 0;
+    color: var(--text-color);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.size-tips-list {
+    margin: 0 0 12px 0;
+    padding-left: 24px;
+    color: #64748b;
+}
+
+.size-tips-list li {
+    margin-bottom: 6px;
+    position: relative;
+}
+
+.size-tips-list li::before {
+    content: '•';
+    position: absolute;
+    left: -12px;
+    color: var(--primary-color);
+}
+
+.size-warning {
+    margin: 0;
+    color: #e74c3c;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background: #fef2f2;
+    border-radius: 4px;
+}
+
+/* Анимации */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Стили для скроллбара */
+.settings-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Стили для иконок в кнопках предустановок */
+.preset-button svg {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 4px;
+}
+
+.preset-label {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+/* Стили для иконок в подсказках */
+.size-tip svg {
+    width: 16px;
+    height: 16px;
+    color: var(--primary-color);
+}
+
+.size-warning svg {
+    width: 16px;
+    height: 16px;
+    color: #e74c3c;
+}
+
+/* Улучшенные стили для кнопок */
+.preset-button {
+    padding: 12px 8px;
+    min-width: 90px;
+}
+
+.preset-button:hover svg,
+.preset-button.active svg {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+.apply-size-button {
+    height: 40px;
+}
+
+.apply-size-button:hover svg {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+}
+
+/* Улучшенные стили для полей ввода */
+.size-input-group input {
+    height: 36px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+}
+
+.size-input-group input:hover {
+    border-color: var(--primary-color);
+}
+
+.size-input-group input:focus {
+    transform: translateY(-1px);
+}
+
+/* Стили для списка рекомендаций */
+.size-tips-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.size-tips-list li::before {
+    font-size: 18px;
+}
+
+/* Анимации для иконок */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.settings-section:hover svg {
+    animation: pulse 1s ease-in-out;
+}
+
+/* Улучшенные стили для заголовков секций */
+.settings-section h3 {
+    position: relative;
+    padding-left: 16px;
+}
+
+.settings-section h3::before {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Стили для высокого режима */
+.content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    transition: min-height 0.3s ease;
+}
+
+.settings-panel {
+    max-height: 100vh;
+    overflow-y: auto;
 } 

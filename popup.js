@@ -3,32 +3,6 @@ let currentFilter = '';
 let isInserting = false;
 let shouldCancelInsertion = false;
 
-// Инициализация настроек
-document.addEventListener('DOMContentLoaded', () => {
-    const settingsButton = document.getElementById('settingsButton');
-    const settingsPanel = document.querySelector('.settings-panel');
-    const settingsClose = document.querySelector('.settings-close');
-
-    if (settingsButton && settingsPanel && settingsClose) {
-        settingsButton.addEventListener('click', () => {
-            settingsPanel.classList.add('active');
-        });
-
-        settingsClose.addEventListener('click', () => {
-            settingsPanel.classList.remove('active');
-        });
-
-        // Закрытие при клике вне панели
-        document.addEventListener('click', (e) => {
-            if (settingsPanel.classList.contains('active') && 
-                !settingsPanel.contains(e.target) && 
-                !settingsButton.contains(e.target)) {
-                settingsPanel.classList.remove('active');
-            }
-        });
-    }
-});
-
 // Статистика использования
 class UsageStats {
     constructor() {
@@ -406,66 +380,95 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            // Убираем активный класс со всех вкладок
             tabs.forEach(t => t.classList.remove('active'));
-            // Добавляем активный класс текущей вкладке
             tab.classList.add('active');
             
-            // Скрываем все контенты вкладок
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
-            // Показываем контент активной вкладки
             document.getElementById(tab.dataset.tab + 'Tab').classList.add('active');
         });
     });
 
     // Инициализация работы с RID
-  const ridInput = document.getElementById('ridInput');
-  const extractButton = document.getElementById('extractRids');
-  const insertButton = document.getElementById('insertRids');
-  const savedRidsDiv = document.getElementById('savedRids');
+    const ridInput = document.getElementById('ridInput');
+    const extractButton = document.getElementById('extractRids');
+    const insertButton = document.getElementById('insertRids');
+    const savedRidsDiv = document.getElementById('savedRids');
 
-  // Восстанавливаем сохраненный текст при открытии
-  chrome.storage.local.get(['inputText', 'rids'], ({ inputText, rids }) => {
-    if (inputText) {
-      ridInput.value = inputText;
-    }
-    if (rids && rids.length > 0) {
-      updateSavedRidsDisplay(rids);
-    }
-  });
+    // Восстанавливаем сохраненный текст при открытии
+    chrome.storage.local.get(['inputText', 'rids'], ({ inputText, rids }) => {
+        if (inputText) {
+            ridInput.value = inputText;
+        }
+        if (rids && rids.length > 0) {
+            updateSavedRidsDisplay(rids);
+        }
+    });
 
-  // Сохраняем текст при каждом изменении
-  ridInput.addEventListener('input', async () => {
-    await chrome.storage.local.set({ inputText: ridInput.value });
-  });
+    // Сохраняем текст при каждом изменении
+    ridInput.addEventListener('input', async () => {
+        await chrome.storage.local.set({ inputText: ridInput.value });
+    });
 
-  function updateSavedRidsDisplay(rids) {
-    if (rids && rids.length > 0) {
-      savedRidsDiv.innerHTML = `
-        <strong>Сохраненные RID значения (${rids.length}):</strong><br>
-        ${rids.join('<br>')}
-      `;
-    } else {
-      savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
-    }
-  }
-
-  extractButton.addEventListener('click', async () => {
-    const text = ridInput.value;
-    const ridPattern = /"rid"\s*:\s*"?([^,"}\s]+)"?/g;
-    const rids = [];
-    let match;
-
-    while ((match = ridPattern.exec(text)) !== null) {
-      rids.push(match[1]);
+    function updateSavedRidsDisplay(rids) {
+        if (rids && rids.length > 0) {
+            savedRidsDiv.innerHTML = `
+                <strong>Сохраненные RID значения (${rids.length}):</strong><br>
+                ${rids.join('<br>')}
+            `;
+        } else {
+            savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
+        }
     }
 
-    await chrome.storage.local.set({ rids });
-    updateSavedRidsDisplay(rids);
-    alert(`Найдено ${rids.length} RID значений`);
-  });
+    extractButton.addEventListener('click', async () => {
+        const text = ridInput.value;
+        const ridPattern = /"rid"\s*:\s*"?([^,"}\s]+)"?/g;
+        const rids = [];
+        let match;
+
+        while ((match = ridPattern.exec(text)) !== null) {
+            rids.push(match[1]);
+        }
+
+        await chrome.storage.local.set({ rids });
+        updateSavedRidsDisplay(rids);
+        
+        // Создаем и показываем уведомление
+        const notification = document.createElement('div');
+        notification.className = 'notification-dialog';
+        notification.innerHTML = `
+            <div class="notification-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Оповещение расширения «SupportMate»
+            </div>
+            <div class="notification-content">
+                Найдено ${rids.length} RID ${rids.length === 1 ? 'значение' : rids.length < 5 ? 'значения' : 'значений'}
+            </div>
+            <div class="notification-actions">
+                <button class="notification-button">OK</button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Добавляем обработчик для кнопки
+        const okButton = notification.querySelector('.notification-button');
+        okButton.addEventListener('click', () => {
+            notification.remove();
+        });
+        
+        // Автоматически скрываем уведомление через 3 секунды
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                notification.remove();
+            }
+        }, 3000);
+    });
 
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
@@ -475,434 +478,330 @@ document.addEventListener('DOMContentLoaded', function() {
     cancelProgress.addEventListener('click', () => {
         shouldCancelInsertion = true;
         progressText.textContent = 'Отмена...';
-  });
+    });
 
-  insertButton.addEventListener('click', async () => {
-    try {
-        if (isInserting) {
-            alert('Процесс вставки уже запущен');
-            return;
-        }
+    insertButton.addEventListener('click', async () => {
+        try {
+            if (isInserting) {
+                alert('Процесс вставки уже запущен');
+                return;
+            }
 
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab) {
-        alert('Не удалось получить активную вкладку');
-        return;
-      }
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tab) {
+                alert('Не удалось получить активную вкладку');
+                return;
+            }
 
-      const { rids } = await chrome.storage.local.get('rids');
-      
-      if (!rids || rids.length === 0) {
-        alert('Нет сохраненных RID значений');
-        return;
-      }
-
-        isInserting = true;
-        shouldCancelInsertion = false;
-        
-        // Улучшенное отображение прогресса
-        progressContainer.classList.add('visible');
-        progressBar.style.width = '0%';
-        progressText.innerHTML = `
-            <div class="progress-info">
-                <span class="progress-status">Подготовка к вставке...</span>
-                <span class="progress-numbers">0/${rids.length}</span>
-            </div>
-        `;
-        
-        // Добавляем время начала
-        const startTime = Date.now();
-      
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: async (ridsArray) => {
-          const inputs = document.querySelectorAll('input.input-element');
-          const input = Array.from(inputs).find(input => {
-            const prevLabel = input.previousElementSibling;
-            return prevLabel && prevLabel.textContent.toLowerCase().includes('rid');
-          }) || inputs[2];
-
-          if (!input) {
-                    throw new Error('Не найдено поле для вставки RID значений');
-          }
-
-                let insertedCount = 0;
-                let errorCount = 0;
-                
-          for (const rid of ridsArray) {
-                    // Проверяем флаг отмены
-                    const shouldCancel = await new Promise(resolve => {
-                        chrome.runtime.sendMessage({ type: 'checkCancellation' }, response => {
-                            resolve(response.shouldCancel);
-                        });
-                    });
-
-                    if (shouldCancel) {
-                        throw new Error('Операция отменена пользователем');
-                    }
-
-                    try {
-            input.value = '';
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.value = rid;
+            const { rids } = await chrome.storage.local.get('rids');
             
-            ['input', 'change'].forEach(eventName => {
-                            input.dispatchEvent(new Event(eventName, { bubbles: true }));
-            });
+            if (!rids || rids.length === 0) {
+                alert('Нет сохраненных RID значений');
+                return;
+            }
 
-            const enterKeyEvents = [
-                            new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }),
-                            new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }),
-                            new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true })
-                        ];
-
-                        enterKeyEvents.forEach(event => input.dispatchEvent(event));
-                        insertedCount++;
-                    } catch (error) {
-                        errorCount++;
-                        console.error(`Ошибка при вставке RID ${rid}:`, error);
-                    }
-
-                    // Отправляем расширенную информацию о прогрессе
-                    chrome.runtime.sendMessage({ 
-                        type: 'updateProgress', 
-                        progress: (insertedCount / ridsArray.length) * 100,
-                        current: insertedCount,
-                        total: ridsArray.length,
-                        errors: errorCount,
-                        currentRid: rid
-                    });
-
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-
-                return { insertedCount, errorCount };
-        },
-        args: [rids]
-        }).then(results => {
-            const { insertedCount: current, errorCount: errors } = results[0].result;
-            const total = rids.length;
+            isInserting = true;
+            shouldCancelInsertion = false;
             
-            // Показываем итоговую статистику и сообщение о завершении
-            const endTime = Date.now();
-            const duration = Math.round((endTime - startTime) / 1000);
-            
+            // Улучшенное отображение прогресса
+            progressContainer.classList.add('visible');
+            progressBar.style.width = '0%';
             progressText.innerHTML = `
                 <div class="progress-info">
-                    <span class="progress-status">✅ Готово! Вставлено за ${duration} сек</span>
-                    <span class="progress-numbers">${current}/${total} ${errors > 0 ? `(${errors} ошибок)` : ''}</span>
-                </div>
-                <div class="completion-message">
-                    <p>Все RID успешно обработаны! 🎉</p>
-                    <p>Не забудьте добавить:</p>
-                    <ul>
-                        <li>✔️ Ссылку на оплату</li>
-                        <li>✔️ И конечно же ЛК</li>
-                    </ul>
-                    <p class="thank-you">SupportMate всегда на страже! 🛡️</p>
-                    <p class="support-text">Ваш надёжный помощник в работе 💪</p>
+                    <span class="progress-status">Подготовка к вставке...</span>
+                    <span class="progress-numbers">0/${rids.length}</span>
                 </div>
             `;
             
-            // Очищаем поле ввода и сохраненные RID
-      ridInput.value = '';
-            chrome.storage.local.remove(['inputText', 'rids']);
+            // Добавляем время начала
+            const startTime = Date.now();
             
-            // Увеличиваем время отображения до 40 секунд
-            setTimeout(() => {
-                progressContainer.classList.remove('visible');
-                progressBar.style.width = '0%';
-                savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
-            }, 40000); // 40 секунд
-        });
-    } catch (error) {
-      console.error('Ошибка:', error);
-        progressText.innerHTML = `
-            <div class="progress-info">
-                <span class="progress-status error">Ошибка: ${error.message}</span>
-            </div>
-        `;
-    } finally {
-        isInserting = false;
-    }
-});
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: async (ridsArray) => {
+                    const inputs = document.querySelectorAll('input.input-element');
+                    const input = Array.from(inputs).find(input => {
+                        const prevLabel = input.previousElementSibling;
+                        return prevLabel && prevLabel.textContent.toLowerCase().includes('rid');
+                    }) || inputs[2];
 
-// Обработка сообщений о прогрессе
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'checkCancellation') {
-        sendResponse({ shouldCancel: shouldCancelInsertion });
-    } else if (message.type === 'updateProgress') {
-        progressBar.style.width = `${message.progress}%`;
+                    if (!input) {
+                        throw new Error('Не найдено поле для вставки RID значений');
+                    }
+
+                    let insertedCount = 0;
+                    let errorCount = 0;
+                    
+                    for (const rid of ridsArray) {
+                        // Проверяем флаг отмены
+                        const shouldCancel = await new Promise(resolve => {
+                            chrome.runtime.sendMessage({ type: 'checkCancellation' }, response => {
+                                resolve(response.shouldCancel);
+                            });
+                        });
+
+                        if (shouldCancel) {
+                            throw new Error('Операция отменена пользователем');
+                        }
+
+                        try {
+                            input.value = '';
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            input.value = rid;
+                            
+                            ['input', 'change'].forEach(eventName => {
+                                input.dispatchEvent(new Event(eventName, { bubbles: true }));
+                            });
+
+                            const enterKeyEvents = [
+                                new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }),
+                                new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }),
+                                new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true })
+                            ];
+
+                            enterKeyEvents.forEach(event => input.dispatchEvent(event));
+                            insertedCount++;
+                        } catch (error) {
+                            errorCount++;
+                            console.error(`Ошибка при вставке RID ${rid}:`, error);
+                        }
+
+                        // Отправляем расширенную информацию о прогрессе
+                        chrome.runtime.sendMessage({ 
+                            type: 'updateProgress', 
+                            progress: (insertedCount / ridsArray.length) * 100,
+                            current: insertedCount,
+                            total: ridsArray.length,
+                            errors: errorCount,
+                            currentRid: rid
+                        });
+
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+
+                    return { insertedCount, errorCount };
+                },
+                args: [rids]
+            }).then(results => {
+                const { insertedCount: current, errorCount: errors } = results[0].result;
+                const total = rids.length;
+                
+                // Показываем итоговую статистику и сообщение о завершении
+                const endTime = Date.now();
+                const duration = Math.round((endTime - startTime) / 1000);
+                
+                progressText.innerHTML = `
+                    <div class="progress-info">
+                        <span class="progress-status">✅ Готово! Вставлено за ${duration} сек</span>
+                        <span class="progress-numbers">${current}/${total} ${errors > 0 ? `(${errors} ошибок)` : ''}</span>
+                    </div>
+                    <div class="completion-message">
+                        <p>Все RID успешно обработаны! 🎉</p>
+                        <p>Не забудьте добавить:</p>
+                        <ul>
+                            <li>✔️ Ссылку на оплату</li>
+                            <li>✔️ И конечно же ЛК</li>
+                        </ul>
+                        <p class="thank-you">SupportMate всегда на страже! 🛡️</p>
+                        <p class="support-text">Ваш надёжный помощник в работе 💪</p>
+                    </div>
+                `;
+                
+                // Очищаем поле ввода и сохраненные RID
+                ridInput.value = '';
+                chrome.storage.local.remove(['inputText', 'rids']);
+                
+                // Увеличиваем время отображения до 40 секунд
+                setTimeout(() => {
+                    progressContainer.classList.remove('visible');
+                    progressBar.style.width = '0%';
+                    savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
+                }, 40000); // 40 секунд
+            });
+        } catch (error) {
+            console.error('Ошибка:', error);
+            progressText.innerHTML = `
+                <div class="progress-info">
+                    <span class="progress-status error">Ошибка: ${error.message}</span>
+                </div>
+            `;
+        } finally {
+            isInserting = false;
+        }
+    });
+
+    // Обработка сообщений о прогрессе
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.type === 'checkCancellation') {
+            sendResponse({ shouldCancel: shouldCancelInsertion });
+        } else if (message.type === 'updateProgress') {
+            progressBar.style.width = `${message.progress}%`;
+            
+            // Расширенное отображение прогресса
+            progressText.innerHTML = `
+                <div class="progress-info">
+                    <span class="progress-status">
+                        Обработка: ${message.currentRid}
+                        ${message.errors > 0 ? `<span class="error">(Ошибок: ${message.errors})</span>` : ''}
+                    </span>
+                    <span class="progress-numbers">${message.current}/${message.total}</span>
+                </div>
+            `;
+        }
+        return true;
+    });
+
+    // Функция для обновления счетчика результатов
+    function updateResultsCount() {
+        const visibleProblems = document.querySelectorAll('.problem-item[style*="display: block"]').length;
+        document.getElementById('resultsCount').textContent = `Найдено: ${visibleProblems}`;
+    }
+
+    // Обработка сообщений об обновлениях
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.type === 'updateAvailable') {
+            showUpdateNotification(message.version);
+        }
+        // ... existing message handling code ...
+    });
+
+    function showUpdateNotification(version) {
+        const header = document.querySelector('.header');
+        if (!header.querySelector('.update-notification')) {
+            const notification = document.createElement('div');
+            notification.className = 'update-notification';
+            notification.innerHTML = `
+                <span>Доступна новая версия ${version}</span>
+                <button class="update-button">Обновить</button>
+            `;
+            header.appendChild(notification);
+
+            notification.querySelector('.update-button').addEventListener('click', () => {
+                chrome.runtime.requestUpdateCheck();
+            });
+        }
+    }
+
+    // Добавляем стили для уведомления об обновлении
+    const style = document.createElement('style');
+    style.textContent = `
+        .update-notification {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background: #fef3c7;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #92400e;
+        }
+
+        .update-button {
+            padding: 2px 8px;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .update-button:hover {
+            background: #d97706;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Проверяем наличие обновления при открытии
+    chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
+        if (updateInfo && updateInfo.showNotification) {
+            const notification = document.getElementById('updateNotification');
+            notification.style.display = 'block';
+            notification.addEventListener('click', () => {
+                chrome.tabs.create({ url: updateInfo.downloadUrl });
+            });
+        }
+    });
+
+    function showUpdateDialog(updateInfo) {
+        const dialog = document.getElementById('updateDialog');
+        const changes = document.getElementById('updateChanges');
         
-        // Расширенное отображение прогресса
-        progressText.innerHTML = `
-            <div class="progress-info">
-                <span class="progress-status">
-                    Обработка: ${message.currentRid}
-                    ${message.errors > 0 ? `<span class="error">(Ошибок: ${message.errors})</span>` : ''}
-                </span>
-                <span class="progress-numbers">${message.current}/${message.total}</span>
-            </div>
-        `;
-    }
-    return true;
-});
+        changes.textContent = updateInfo.changes || 'Доступна новая версия расширения';
+        dialog.classList.add('visible');
 
-// Функция для обновления счетчика результатов
-function updateResultsCount() {
-    const visibleProblems = document.querySelectorAll('.problem-item[style*="display: block"]').length;
-    document.getElementById('resultsCount').textContent = `Найдено: ${visibleProblems}`;
-}
-
-// Обработка сообщений об обновлениях
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'updateAvailable') {
-        showUpdateNotification(message.version);
-    }
-    // ... existing message handling code ...
-});
-
-function showUpdateNotification(version) {
-    const header = document.querySelector('.header');
-    if (!header.querySelector('.update-notification')) {
-        const notification = document.createElement('div');
-        notification.className = 'update-notification';
-        notification.innerHTML = `
-            <span>Доступна новая версия ${version}</span>
-            <button class="update-button">Обновить</button>
-        `;
-        header.appendChild(notification);
-
-        notification.querySelector('.update-button').addEventListener('click', () => {
-            chrome.runtime.requestUpdateCheck();
-        });
-    }
-}
-
-// Добавляем стили для уведомления об обновлении
-const style = document.createElement('style');
-style.textContent = `
-    .update-notification {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 4px 8px;
-        background: #fef3c7;
-        border-radius: 4px;
-        font-size: 12px;
-        color: #92400e;
-    }
-
-    .update-button {
-        padding: 2px 8px;
-        background: #f59e0b;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-        transition: background 0.2s;
-    }
-
-    .update-button:hover {
-        background: #d97706;
-    }
-`;
-document.head.appendChild(style);
-
-// Проверяем наличие обновления при открытии
-chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
-    if (updateInfo && updateInfo.showNotification) {
-        const notification = document.getElementById('updateNotification');
-        notification.style.display = 'block';
-        notification.addEventListener('click', () => {
+        // Обработка кнопок
+        document.getElementById('updateNow').addEventListener('click', () => {
+            // Открываем ссылку на скачивание
             chrome.tabs.create({ url: updateInfo.downloadUrl });
+            // Открываем страницу расширений
+            chrome.tabs.create({ url: 'chrome://extensions/' });
+            // Скрываем диалог
+            dialog.classList.remove('visible');
+        });
+
+        document.getElementById('updateLater').addEventListener('click', () => {
+            dialog.classList.remove('visible');
         });
     }
-});
 
-function showUpdateDialog(updateInfo) {
-    const dialog = document.getElementById('updateDialog');
-    const changes = document.getElementById('updateChanges');
-    
-    changes.textContent = updateInfo.changes || 'Доступна новая версия расширения';
-    dialog.classList.add('visible');
+    // Инициализация обработчиков категорий и тегов
+    document.addEventListener('DOMContentLoaded', () => {
+        // Обработчики для категорий
+        const categoryChips = document.querySelectorAll('.category-chip');
+        categoryChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                // Убираем активный класс у всех категорий
+                categoryChips.forEach(c => c.classList.remove('active'));
+                // Добавляем активный класс выбранной категории
+                chip.classList.add('active');
+                
+                const category = chip.dataset.category;
+                filterProblems();
+            });
+        });
 
-    // Обработка кнопок
-    document.getElementById('updateNow').addEventListener('click', () => {
-        // Открываем ссылку на скачивание
-        chrome.tabs.create({ url: updateInfo.downloadUrl });
-        // Открываем страницу расширений
-        chrome.tabs.create({ url: 'chrome://extensions/' });
-        // Скрываем диалог
-        dialog.classList.remove('visible');
+        // Обработчики для тегов
+        const tagChips = document.querySelectorAll('.tag-chip');
+        tagChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+                filterProblems();
+            });
+        });
     });
 
-    document.getElementById('updateLater').addEventListener('click', () => {
-        dialog.classList.remove('visible');
-    });
-}
+    // Функция фильтрации проблем
+    function filterProblems() {
+        const activeCategory = document.querySelector('.category-chip.active').dataset.category;
+        const activeTags = Array.from(document.querySelectorAll('.tag-chip.active')).map(tag => tag.dataset.tag);
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
 
-// Функции для работы с настройками
-function initializeSettings() {
-    const settingsButton = document.getElementById('settingsButton');
-    const settingsPanel = document.querySelector('.settings-panel');
-    const settingsClose = document.querySelector('.settings-close');
-    const fontSizeSlider = document.getElementById('fontSizeSlider');
-    const fontSizeValue = document.getElementById('fontSizeValue');
-    const fontFamilySelect = document.getElementById('fontFamilySelect');
-    const boldText = document.getElementById('boldText');
-    const italicText = document.getElementById('italicText');
-    const windowSizeValue = document.getElementById('windowSizeValue');
-    const resizeHandle = document.querySelector('.resize-handle');
+        const problems = document.querySelectorAll('.problem-item');
+        let visibleCount = 0;
 
-    // Загружаем сохраненные настройки
-    chrome.storage.local.get(['fontSize', 'fontFamily', 'textStyle', 'windowSize'], function(result) {
-        // Размер текста
-        if (result.fontSize) {
-            updateFontSize(result.fontSize);
-            fontSizeSlider.value = result.fontSize;
-            fontSizeValue.textContent = `${result.fontSize}px`;
-        }
-        
-        // Шрифт
-        if (result.fontFamily) {
-            fontFamilySelect.value = result.fontFamily;
-            document.body.style.fontFamily = result.fontFamily;
-        }
+        problems.forEach(problem => {
+            const problemCategory = problem.dataset.category;
+            const problemTags = (problem.dataset.tags || '').split(',');
+            const problemText = problem.textContent.toLowerCase();
 
-        // Стили текста
-        if (result.textStyle) {
-            boldText.checked = result.textStyle.includes('bold');
-            italicText.checked = result.textStyle.includes('italic');
-            updateTextStyle();
-        }
-        
-        // Размер окна
-        if (result.windowSize) {
-            document.body.style.width = result.windowSize.width;
-            document.body.style.height = result.windowSize.height;
-            updateWindowSizeDisplay();
-        }
-    });
+            const matchesCategory = activeCategory === 'all' || problemCategory === activeCategory;
+            const matchesTags = activeTags.length === 0 || activeTags.every(tag => problemTags.includes(tag));
+            const matchesSearch = !searchQuery || problemText.includes(searchQuery);
 
-    // Обработчики для панели настроек
-    settingsButton.addEventListener('click', () => {
-        settingsPanel.classList.add('active');
-    });
-
-    settingsClose.addEventListener('click', () => {
-        settingsPanel.classList.remove('active');
-    });
-
-    // Обработчик клика вне панели настроек
-    document.addEventListener('click', (e) => {
-        if (settingsPanel.classList.contains('active') && 
-            !settingsPanel.contains(e.target) && 
-            !settingsButton.contains(e.target)) {
-            settingsPanel.classList.remove('active');
-        }
-    });
-
-    // Обработчик изменения размера текста
-    fontSizeSlider.addEventListener('input', (e) => {
-        const size = e.target.value;
-        updateFontSize(size);
-        fontSizeValue.textContent = `${size}px`;
-        chrome.storage.local.set({ fontSize: size });
-    });
-
-    // Обработчики стилей текста
-    fontFamilySelect.addEventListener('change', (e) => {
-        const fontFamily = e.target.value;
-        document.body.style.fontFamily = fontFamily;
-        chrome.storage.local.set({ fontFamily });
-    });
-
-    boldText.addEventListener('change', updateTextStyle);
-    italicText.addEventListener('change', updateTextStyle);
-
-    // Обработчик изменения размера окна
-    let isResizing = false;
-    let originalWidth;
-    let originalHeight;
-    let originalMouseX;
-    let originalMouseY;
-
-    resizeHandle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        originalWidth = document.body.offsetWidth;
-        originalHeight = document.body.offsetHeight;
-        originalMouseX = e.pageX;
-        originalMouseY = e.pageY;
-        
-        document.addEventListener('mousemove', handleResize);
-        document.addEventListener('mouseup', stopResize);
-    });
-
-    function handleResize(e) {
-        if (!isResizing) return;
-
-        const width = originalWidth + (e.pageX - originalMouseX);
-        const height = originalHeight + (e.pageY - originalMouseY);
-
-        const newWidth = Math.min(Math.max(width, 400), 800);
-        const newHeight = Math.min(Math.max(height, 300), 800);
-
-        document.body.style.width = `${newWidth}px`;
-        document.body.style.height = `${newHeight}px`;
-
-        updateWindowSizeDisplay();
-
-        chrome.storage.local.set({
-            windowSize: {
-                width: `${newWidth}px`,
-                height: `${newHeight}px`
+            if (matchesCategory && matchesTags && matchesSearch) {
+                problem.style.display = '';
+                visibleCount++;
+            } else {
+                problem.style.display = 'none';
             }
         });
+
+        // Обновляем счетчик найденных проблем
+        const resultsCount = document.getElementById('resultsCount');
+        if (resultsCount) {
+            resultsCount.textContent = `Найдено: ${visibleCount}`;
+        }
     }
-
-    function stopResize() {
-        isResizing = false;
-        document.removeEventListener('mousemove', handleResize);
-        document.removeEventListener('mouseup', stopResize);
-    }
-
-    function updateWindowSizeDisplay() {
-        const width = document.body.offsetWidth;
-        const height = document.body.offsetHeight;
-        windowSizeValue.textContent = `${width} x ${height}`;
-    }
-}
-
-// Функция обновления размера текста
-function updateFontSize(size) {
-    const elements = document.querySelectorAll('.problem-title, .problem-content, .problem-requirements, #ridInput');
-    elements.forEach(element => {
-        element.style.fontSize = `${size}px`;
-    });
-}
-
-// Функция обновления стиля текста
-function updateTextStyle() {
-    const boldText = document.getElementById('boldText');
-    const italicText = document.getElementById('italicText');
-    const elements = document.querySelectorAll('.problem-title, .problem-content, .problem-requirements');
-    
-    const styles = [];
-    if (boldText.checked) styles.push('bold');
-    if (italicText.checked) styles.push('italic');
-
-    elements.forEach(element => {
-        element.style.fontWeight = boldText.checked ? 'bold' : 'normal';
-        element.style.fontStyle = italicText.checked ? 'italic' : 'normal';
-    });
-
-    chrome.storage.local.set({ textStyle: styles });
-}
-
-// Инициализируем настройки при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    initializeSettings();
 });
-})

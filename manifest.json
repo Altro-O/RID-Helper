@@ -9,7 +9,8 @@
     "scripting",
     "alarms",
     "tabs",
-    "notifications"
+    "notifications",
+    "windows"
   ],
   "host_permissions": [
     "https://raw.githubusercontent.com/*"
