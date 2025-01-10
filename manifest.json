@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "RID Helper",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Помощник для работы с RID и поиска по базе проблем",
   "permissions": [
     "storage",
