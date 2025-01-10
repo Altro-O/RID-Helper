@@ -2,32 +2,23 @@
   "manifest_version": 3,
   "name": "RID Helper",
   "version": "1.0",
-  "description": "Расширение для работы с RID значениями",
+  "description": "Помощник для работы с RID и поиска по базе проблем",
   "permissions": [
     "storage",
     "activeTab",
-    "scripting",
-    "tabs"
-  ],
-  "host_permissions": [
-    "<all_urls>"
+    "scripting"
   ],
   "action": {
     "default_popup": "popup.html"
   },
-  "background": {
-    "service_worker": "background.js"
-  },
+  "web_accessible_resources": [{
+    "resources": ["problems.json"],
+    "matches": ["<all_urls>"]
+  }],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_end",
-      "all_frames": true
+      "js": ["content.js"]
     }
-  ],
-  "web_accessible_resources": [{
-    "resources": ["content.js"],
-    "matches": ["<all_urls>"]
-  }]
+  ]
 } 

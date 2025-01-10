@@ -1,73 +1,740 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <style>
-    body {
-      width: 300px;
-      padding: 15px;
-      font-family: Arial, sans-serif;
-      background: #f8f9fa;
-    }
+    <meta charset="UTF-8">
+    <title>RID Helper</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f6fa;
+            --text-color: #2c3e50;
+            --border-color: #e1e8ed;
+            --hover-color: #357abd;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
 
-    .container {
-      background: white;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+        body {
+            width: 450px;
+            min-width: 400px;
+            max-width: 800px;
+            min-height: 300px;
+            max-height: 800px;
+            resize: both;
+            overflow: auto;
+            position: relative;
+            padding: 0;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: white;
+            color: var(--text-color);
+        }
 
-    textarea {
-      width: 100%;
-      height: 120px;
-      padding: 8px;
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      resize: none;
-      font-family: monospace;
-      font-size: 12px;
-    }
+        .header {
+            background: var(--primary-color);
+            padding: 8px 16px;
+            color: white;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-    button {
-      width: 100%;
-      margin-bottom: 8px;
-      padding: 8px;
-      border: none;
-      border-radius: 4px;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
+        .header h1 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
 
-    button:hover {
-      background: #0056b3;
-    }
+        .tabs {
+            display: flex;
+            background: white;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-    button:active {
-      background: #004085;
-    }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            color: var(--text-color);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
 
-    #savedRids {
-      margin-top: 10px;
-      padding: 8px;
-      background: #e9ecef;
-      border-radius: 4px;
-      font-size: 12px;
-      color: #495057;
-      max-height: 100px;
-      overflow-y: auto;
-    }
-  </style>
+        .tab:hover {
+            color: var(--primary-color);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .content-wrapper {
+            padding: 16px;
+        }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Стили для поиска проблем */
+        .search-container {
+            margin-bottom: 16px;
+            position: relative;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: #94a3b8;
+        }
+        
+        #searchInput {
+            width: 100%;
+            padding: 12px 12px 12px 36px;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+        
+        .results-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        
+        .problem-item {
+            position: relative;
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease;
+        }
+
+        .problem-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .problem-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+        
+        .problem-category {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--secondary-color);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+        
+        .problem-content {
+            margin-bottom: 8px;
+            line-height: 1.5;
+            position: relative;
+        }
+        
+        .problem-content.collapsible {
+            max-height: none;
+        }
+        
+        .problem-content.collapsed {
+            max-height: 120px;
+            overflow: hidden;
+        }
+
+        .problem-content.collapsed::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(transparent, white 80%);
+            pointer-events: none;
+        }
+
+        .toggle-content {
+            display: none;
+            margin-left: auto;
+        }
+
+        .toggle-content.visible {
+            display: flex;
+            align-items: center;
+        }
+        
+        .problem-requirements {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            background: var(--secondary-color);
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        /* Стили для работы с RID */
+        #ridInput {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            resize: none;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        #ridInput:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: var(--shadow);
+        }
+
+        button:hover {
+            background: var(--hover-color);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #savedRids {
+            padding: 12px;
+            background: var(--secondary-color);
+            border-radius: 8px;
+            font-size: 13px;
+            max-height: 150px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        /* Стилизация скроллбара */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--secondary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #bdc3c7;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #95a5a6;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 32px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 16px;
+            background: #fdf0ed;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        /* Стили для подсветки результатов поиска */
+        .highlight {
+            background-color: rgba(74, 144, 226, 0.2);
+            border-radius: 2px;
+            padding: 0 2px;
+            font-weight: 500;
+        }
+
+        /* Стили для фильтров и категорий */
+        .filters-container {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .favorites-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .favorites-toggle.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .favorites-toggle svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .categories-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: var(--secondary-color);
+            border-radius: 8px;
+        }
+
+        .category-chip {
+            padding: 6px 12px;
+            background: white;
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            white-space: nowrap;
+        }
+
+        .category-chip:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .category-chip.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .popular-queries {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .query-chip {
+            padding: 4px 12px;
+            background: #e2e8f0;
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .query-chip:hover {
+            background: #cbd5e1;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-count {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        /* Стили для кнопок действий в карточках */
+        .problem-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--secondary-color);
+            border: none;
+            color: var(--text-color);
+        }
+
+        .action-button:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .action-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .favorite-button {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            padding: 2px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .favorite-button.active {
+            color: #eab308;
+        }
+
+        .favorite-button:hover {
+            transform: scale(1.1);
+        }
+
+        .favorite-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Стили для прогресс-бара */
+        .progress-container {
+            display: none;
+            margin-top: 8px;
+            padding: 8px;
+            background: var(--secondary-color);
+            border-radius: 8px;
+        }
+
+        .progress-container.visible {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .progress-cancel {
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: underline;
+        }
+
+        /* Стили для изменяемого размера окна */
+        body {
+            width: 450px;
+            min-width: 400px;
+            max-width: 800px;
+            min-height: 300px;
+            max-height: 800px;
+            resize: both;
+            overflow: auto;
+            position: relative;
+        }
+
+        /* Улучшенные анимации для вкладок */
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: se-resize;
+            opacity: 0.3;
+            transition: opacity 0.2s ease;
+        }
+
+        .resize-handle:hover {
+            opacity: 0.8;
+        }
+
+        .resize-handle::before {
+            content: '';
+            position: absolute;
+            right: 4px;
+            bottom: 4px;
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid #94a3b8;
+            border-bottom: 2px solid #94a3b8;
+        }
+
+        /* Стили для статистики */
+        .stats-container {
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--secondary-color);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .stats-label {
+            color: #64748b;
+        }
+
+        .stats-value {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        /* Стили для подсказок */
+        .suggestions-container {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .suggestion-item {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            padding: 4px 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Стили для группировки результатов */
+        .results-group {
+            margin-bottom: 24px;
+        }
+
+        .results-group-header {
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Стили для шаблонов ответов */
+        .templates-container {
+            margin-top: 16px;
+        }
+
+        .template-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .template-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .template-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: var(--primary-color);
+        }
+
+        .template-preview {
+            font-size: 13px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <textarea id="ridInput" placeholder="Вставьте JSON с RID значениями или список RID (каждый RID с новой строки)"></textarea>
-    <button id="extractRids">Извлечь RID значения</button>
-    <button id="insertRids">Вставить RID значения</button>
-    <div id="savedRids"></div>
-  </div>
-  <script src="popup.js"></script>
+    <div class="header">
+        <h1>RID Helper</h1>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="problems">Поиск проблем</div>
+        <div class="tab" data-tab="rids">Работа с RID</div>
+    </div>
+
+    <div class="content-wrapper">
+        <div id="problemsTab" class="tab-content active">
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Поиск проблем...">
+            </div>
+
+            <div class="filters-container">
+                <div class="categories-container" id="categoriesContainer">
+                    <!-- Категории будут добавлены динамически -->
+                </div>
+                <div class="popular-queries">
+                    <div class="query-chip" data-query="возврат">возврат</div>
+                    <div class="query-chip" data-query="брак">брак</div>
+                    <div class="query-chip" data-query="доставка">доставка</div>
+                    <div class="query-chip" data-query="отказ">отказ</div>
+                </div>
+            </div>
+
+            <div class="results-header">
+                <div class="results-count" id="resultsCount"></div>
+            </div>
+
+            <div class="results-container" id="resultsContainer">
+                <!-- Результаты поиска будут добавлены здесь -->
+            </div>
+
+            <div class="stats-container">
+                <div class="stats-item">
+                    <span class="stats-label">Сэкономлено времени:</span>
+                    <span class="stats-value" id="timeSaved">0 мин</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-label">Обработано проблем:</span>
+                    <span class="stats-value" id="problemsProcessed">0</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-label">Использовано RID:</span>
+                    <span class="stats-value" id="ridsUsed">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="ridsTab" class="tab-content">
+            <textarea id="ridInput" placeholder="Вставьте JSON с RID значениями или список RID (каждый RID с новой строки)"></textarea>
+            <div class="button-group">
+                <button id="extractRids">Извлечь RID</button>
+                <button id="insertRids">Вставить RID</button>
+            </div>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+                <div class="progress-info">
+                    <span id="progressText">Вставка RID: 0/0</span>
+                    <span class="progress-cancel" id="cancelProgress">Отменить</span>
+                </div>
+            </div>
+            <div id="savedRids"></div>
+        </div>
+    </div>
+
+    <div class="resize-handle"></div>
+
+    <script src="popup.js" type="module"></script>
 </body>
 </html> 
