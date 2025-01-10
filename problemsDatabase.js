@@ -1,11 +1,55 @@
-export default class ProblemsDatabase {
+class ProblemsDatabase {
     constructor(problems) {
         this.problems = problems;
+        this.searchCache = new Map();
+        this.cacheLimit = 100;
         this.createSearchIndex();
     }
 
+    // Вспомогательные методы
+    extractWords(text) {
+        return text.toLowerCase()
+            .replace(/[^а-яё\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 2);
+    }
+
+    getWordPositions(word, text) {
+        const positions = [];
+        const lowerText = text.toLowerCase();
+        const lowerWord = word.toLowerCase();
+        let pos = 0;
+        
+        while ((pos = lowerText.indexOf(lowerWord, pos)) !== -1) {
+            positions.push(pos);
+            pos += 1;
+        }
+        
+        return positions;
+    }
+
+    // Методы для работы с категориями
+    getCategories() {
+        if (!this.problems || !Array.isArray(this.problems)) {
+            console.error('Problems array is not initialized properly');
+            return [];
+        }
+        const categories = new Set();
+        this.problems.forEach(problem => {
+            if (problem && problem.category) {
+                categories.add(problem.category);
+            }
+        });
+        return Array.from(categories).sort();
+    }
+
+    filterByCategory(problems, category) {
+        if (!category) return problems;
+        return problems.filter(p => p.category.toLowerCase() === category.toLowerCase());
+    }
+
+    // Методы индексации
     createSearchIndex() {
-        // Создаем индекс для быстрого поиска
         this.searchIndex = new Map();
         
         this.problems.forEach((problem, index) => {
@@ -37,85 +81,72 @@ export default class ProblemsDatabase {
         });
     }
 
-    getWordPositions(word, text) {
-        const positions = [];
-        const lowerText = text.toLowerCase();
-        const lowerWord = word.toLowerCase();
-        let pos = 0;
-        
-        while ((pos = lowerText.indexOf(lowerWord, pos)) !== -1) {
-            positions.push(pos);
-            pos += 1;
-        }
-        
-        return positions;
-    }
-
-    extractWords(text) {
-        return text.toLowerCase()
-            .replace(/[^а-яё\s]/g, ' ')
-            .split(/\s+/)
-            .filter(word => word.length > 2);
-    }
-
+    // Методы поиска
     search(query) {
         if (!query) return this.problems;
+
+        const cacheKey = query.toLowerCase().trim();
+        if (this.searchCache.has(cacheKey)) {
+            return this.searchCache.get(cacheKey);
+        }
 
         const searchWords = this.extractWords(query);
         if (searchWords.length === 0) return this.problems;
 
         const scores = new Map();
         
-        // Для каждого слова в запросе
         searchWords.forEach(word => {
-            // Получаем все проблемы, содержащие это слово
             const wordIndex = this.searchIndex.get(word);
-            if (!wordIndex) return;
+            if (wordIndex) {
+                wordIndex.forEach((positions, problemIndex) => {
+                    let score = scores.get(problemIndex) || 0;
+                    
+                    if (positions.title.length > 0) {
+                        score += 25 * positions.title.length;
+                        if (positions.title[0] === 0) score += 10;
+                    }
+                    if (positions.content.length > 0) {
+                        score += 15 * positions.content.length;
+                    }
+                    if (positions.category.length > 0) {
+                        score += 10 * positions.category.length;
+                    }
+                    if (positions.requirements.length > 0) {
+                        score += 5 * positions.requirements.length;
+                    }
 
-            // Для каждой проблемы
-            wordIndex.forEach((positions, problemIndex) => {
-                const currentScore = scores.get(problemIndex) || 0;
-                let score = currentScore;
+                    scores.set(problemIndex, score);
+                });
+            }
 
-                // Считаем релевантность на основе:
-                // 1. Количества совпадений
-                // 2. Позиции слова (в начале важнее)
-                // 3. Поля, где найдено слово
-                
-                // Совпадения в заголовке
-                if (positions.title.length > 0) {
-                    score += 10 * positions.title.length;
-                    // Бонус за совпадение в начале заголовка
-                    if (positions.title[0] === 0) score += 5;
-                }
+            if (word.length >= 3) {
+                this.problems.forEach((problem, problemIndex) => {
+                    let score = scores.get(problemIndex) || 0;
+                    const problemText = [
+                        problem.title,
+                        problem.content,
+                        problem.category,
+                        problem.requirements
+                    ].join(' ').toLowerCase();
 
-                // Совпадения в контенте
-                if (positions.content.length > 0) {
-                    score += 5 * positions.content.length;
-                    // Бонус за совпадение в начале контента
-                    if (positions.content[0] === 0) score += 3;
-                }
+                    const problemWords = problemText.split(/\s+/);
+                    for (const problemWord of problemWords) {
+                        if (problemWord.includes(word)) {
+                            score += 10;
+                            if (problemWord.startsWith(word)) {
+                                score += 5;
+                            }
+                            break;
+                        }
+                    }
 
-                // Совпадения в категории
-                if (positions.category.length > 0) {
-                    score += 3 * positions.category.length;
-                }
-
-                // Совпадения в требованиях
-                if (positions.requirements.length > 0) {
-                    score += 2 * positions.requirements.length;
-                }
-
-                // Бонус за точное совпадение фразы
-                if (this.problems[problemIndex].title.toLowerCase().includes(query.toLowerCase())) {
-                    score += 20;
-                }
-
-                scores.set(problemIndex, score);
-            });
+                    if (score > 0) {
+                        scores.set(problemIndex, score);
+                    }
+                });
+            }
         });
 
-        // Дополнительные баллы за последовательность слов
         const fullQuery = query.toLowerCase();
         scores.forEach((score, index) => {
             const problem = this.problems[index];
@@ -127,17 +158,24 @@ export default class ProblemsDatabase {
             }
         });
 
-        return Array.from(scores.entries())
+        const results = Array.from(scores.entries())
             .map(([index, score]) => ({
                 ...this.problems[index],
                 score,
                 id: index,
-                // Подсвечиваем найденные слова
                 highlightedTitle: this.highlightMatches(this.problems[index].title, searchWords),
                 highlightedContent: this.highlightMatches(this.problems[index].content, searchWords)
             }))
             .filter(problem => problem.score > 0)
             .sort((a, b) => b.score - a.score);
+
+        if (this.searchCache.size >= this.cacheLimit) {
+            const firstKey = this.searchCache.keys().next().value;
+            this.searchCache.delete(firstKey);
+        }
+        this.searchCache.set(cacheKey, results);
+
+        return results;
     }
 
     highlightMatches(text, searchWords) {
@@ -148,14 +186,11 @@ export default class ProblemsDatabase {
         });
         return result;
     }
+}
 
-    getCategories() {
-        const categories = new Set(this.problems.map(p => p.category));
-        return Array.from(categories).sort();
-    }
-
-    filterByCategory(problems, category) {
-        if (!category) return problems;
-        return problems.filter(p => p.category.toLowerCase() === category.toLowerCase());
-    }
+// Экспортируем класс
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ProblemsDatabase;
+} else if (typeof window !== 'undefined') {
+    window.ProblemsDatabase = ProblemsDatabase;
 } 

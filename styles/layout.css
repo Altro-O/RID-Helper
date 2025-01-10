@@ -1,0 +1,142 @@
+/* Header */
+.header {
+    background: var(--primary-color);
+    padding: 8px 16px;
+    color: white;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-button {
+    background: none;
+    border: none;
+    color: white;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.header-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    background: white;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+    padding: 12px 24px;
+    cursor: pointer;
+    color: var(--text-color);
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.tab:hover {
+    color: var(--primary-color);
+}
+
+.tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+/* Content */
+.content-wrapper {
+    padding: 16px;
+}
+
+.tab-content {
+    display: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Results */
+.results-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.results-count {
+    font-size: 14px;
+    color: #64748b;
+}
+
+/* Footer */
+.footer {
+    margin-top: 16px;
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    color: #64748b;
+    font-size: 12px;
+}
+
+.footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer a:hover {
+    color: var(--hover-color);
+}
+
+/* Resize handle */
+.resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: se-resize;
+    background: linear-gradient(135deg, transparent 50%, var(--primary-color) 50%);
+    border-radius: 0 0 4px 0;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+}
+
+.resize-handle:hover {
+    opacity: 0.8;
+} 

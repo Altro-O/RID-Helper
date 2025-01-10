@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "RID Helper",
-  "version": "1.0.5",
-  "description": "Помощник для работы с RID и поиска по базе проблем",
+  "name": "SupportMate",
+  "version": "1.0.6",
+  "description": "Ваш надёжный помощник в работе службы поддержки. Быстрый поиск по базе проблем, работа с RID и многое другое.",
   "permissions": [
     "storage",
     "activeTab",
@@ -18,7 +18,14 @@
     "default_popup": "popup.html"
   },
   "web_accessible_resources": [{
-    "resources": ["problems.json"],
+    "resources": [
+      "problems.json",
+      "styles/base.css",
+      "styles/components.css",
+      "styles/layout.css",
+      "styles/settings.css",
+      "styles/dialogs.css"
+    ],
     "matches": ["<all_urls>"]
   }],
   "content_scripts": [

@@ -1,5 +1,3 @@
-import ProblemsDatabase from './problemsDatabase.js';
-
 let db;
 let currentFilter = '';
 let isInserting = false;
@@ -121,10 +119,16 @@ let suggestions;
 // Обновляем инициализацию базы проблем
 fetch(chrome.runtime.getURL('problems.json'))
     .then(response => response.json())
-    .then(problems => {
-        db = new ProblemsDatabase(problems);
-        suggestions = new SearchSuggestions(problems);
-        initializeInterface();
+    .then(async problems => {
+        try {
+            db = new ProblemsDatabase(problems);
+            suggestions = new SearchSuggestions(problems);
+            await initializeInterface();
+        } catch (error) {
+            console.error('Ошибка инициализации базы проблем:', error);
+            document.getElementById('resultsContainer').innerHTML = 
+                '<div class="error">Ошибка инициализации базы проблем</div>';
+        }
     })
     .catch(error => {
         console.error('Ошибка загрузки базы проблем:', error);
@@ -134,44 +138,58 @@ fetch(chrome.runtime.getURL('problems.json'))
 
 // Инициализация интерфейса
 async function initializeInterface() {
-    initializeCategories();
-    initializeSearch();
-    initializeQueryChips();
-    
-    // Показываем все проблемы при старте
-    const results = db.search('');
-    await displayResults(results);
+    try {
+        initializeCategories();
+        initializeSearch();
+        initializeQueryChips();
+        
+        // Показываем все проблемы при старте
+        const results = db.search('');
+        await displayResults(results);
+    } catch (error) {
+        console.error('Ошибка инициализации интерфейса:', error);
+        document.getElementById('resultsContainer').innerHTML = 
+            '<div class="error">Ошибка инициализации интерфейса</div>';
+    }
 }
 
 function initializeCategories() {
-    // Получаем категории из базы данных
-    const categories = ['Все', ...db.getCategories()];
-    
-    const container = document.getElementById('categoriesContainer');
-    
-    container.innerHTML = categories
-        .map(category => `
-            <div class="category-chip ${category === 'Все' ? 'active' : ''}" 
-                 data-category="${category === 'Все' ? '' : category}">
-                ${category}
-            </div>
-        `)
-        .join('');
-
-    container.addEventListener('click', (e) => {
-        const chip = e.target.closest('.category-chip');
-        if (!chip) return;
-
-        // Убираем активный класс со всех чипов
-        document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
+    try {
+        // Получаем категории из базы данных
+        const categories = ['Все', ...db.getCategories()];
         
-        // Устанавливаем текущий фильтр
-        currentFilter = chip.dataset.category;
+        const container = document.getElementById('categoriesContainer');
+        if (!container) {
+            console.error('Контейнер категорий не найден');
+            return;
+        }
         
-        // Обновляем результаты с учетом фильтра
-        updateResults();
-    });
+        container.innerHTML = categories
+            .map(category => `
+                <div class="category-chip ${category === 'Все' ? 'active' : ''}" 
+                     data-category="${category === 'Все' ? '' : category}">
+                    ${category}
+                </div>
+            `)
+            .join('');
+
+        container.addEventListener('click', (e) => {
+            const chip = e.target.closest('.category-chip');
+            if (!chip) return;
+
+            // Убираем активный класс со всех чипов
+            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            
+            // Устанавливаем текущий фильтр
+            currentFilter = chip.dataset.category;
+            
+            // Обновляем результаты с учетом фильтра
+            updateResults();
+        });
+    } catch (error) {
+        console.error('Ошибка инициализации категорий:', error);
+    }
 }
 
 function initializeQueryChips() {
@@ -377,51 +395,51 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Инициализация работы с RID
-    const ridInput = document.getElementById('ridInput');
-    const extractButton = document.getElementById('extractRids');
-    const insertButton = document.getElementById('insertRids');
-    const savedRidsDiv = document.getElementById('savedRids');
+  const ridInput = document.getElementById('ridInput');
+  const extractButton = document.getElementById('extractRids');
+  const insertButton = document.getElementById('insertRids');
+  const savedRidsDiv = document.getElementById('savedRids');
 
-    // Восстанавливаем сохраненный текст при открытии
-    chrome.storage.local.get(['inputText', 'rids'], ({ inputText, rids }) => {
-        if (inputText) {
-            ridInput.value = inputText;
-        }
-        if (rids && rids.length > 0) {
-            updateSavedRidsDisplay(rids);
-        }
-    });
+  // Восстанавливаем сохраненный текст при открытии
+  chrome.storage.local.get(['inputText', 'rids'], ({ inputText, rids }) => {
+    if (inputText) {
+      ridInput.value = inputText;
+    }
+    if (rids && rids.length > 0) {
+      updateSavedRidsDisplay(rids);
+    }
+  });
 
-    // Сохраняем текст при каждом изменении
-    ridInput.addEventListener('input', async () => {
-        await chrome.storage.local.set({ inputText: ridInput.value });
-    });
+  // Сохраняем текст при каждом изменении
+  ridInput.addEventListener('input', async () => {
+    await chrome.storage.local.set({ inputText: ridInput.value });
+  });
 
-    function updateSavedRidsDisplay(rids) {
-        if (rids && rids.length > 0) {
-            savedRidsDiv.innerHTML = `
-                <strong>Сохраненные RID значения (${rids.length}):</strong><br>
-                ${rids.join('<br>')}
-            `;
-        } else {
-            savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
-        }
+  function updateSavedRidsDisplay(rids) {
+    if (rids && rids.length > 0) {
+      savedRidsDiv.innerHTML = `
+        <strong>Сохраненные RID значения (${rids.length}):</strong><br>
+        ${rids.join('<br>')}
+      `;
+    } else {
+      savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
+    }
+  }
+
+  extractButton.addEventListener('click', async () => {
+    const text = ridInput.value;
+    const ridPattern = /"rid"\s*:\s*"?([^,"}\s]+)"?/g;
+    const rids = [];
+    let match;
+
+    while ((match = ridPattern.exec(text)) !== null) {
+      rids.push(match[1]);
     }
 
-    extractButton.addEventListener('click', async () => {
-        const text = ridInput.value;
-        const ridPattern = /"rid"\s*:\s*"?([^,"}\s]+)"?/g;
-        const rids = [];
-        let match;
-
-        while ((match = ridPattern.exec(text)) !== null) {
-            rids.push(match[1]);
-        }
-
-        await chrome.storage.local.set({ rids });
-        updateSavedRidsDisplay(rids);
-        alert(`Найдено ${rids.length} RID значений`);
-    });
+    await chrome.storage.local.set({ rids });
+    updateSavedRidsDisplay(rids);
+    alert(`Найдено ${rids.length} RID значений`);
+  });
 
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
@@ -431,60 +449,73 @@ document.addEventListener('DOMContentLoaded', function() {
     cancelProgress.addEventListener('click', () => {
         shouldCancelInsertion = true;
         progressText.textContent = 'Отмена...';
-    });
+  });
 
-    insertButton.addEventListener('click', async () => {
-        try {
-            if (isInserting) {
-                alert('Процесс вставки уже запущен');
-                return;
-            }
+  insertButton.addEventListener('click', async () => {
+    try {
+        if (isInserting) {
+            alert('Процесс вставки уже запущен');
+            return;
+        }
 
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (!tab) {
-                alert('Не удалось получить активную вкладку');
-                return;
-            }
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab) {
+            alert('Не удалось получить активную вкладку');
+            return;
+        }
 
-            const { rids } = await chrome.storage.local.get('rids');
-            
-            if (!rids || rids.length === 0) {
-                alert('Нет сохраненных RID значений');
-                return;
-            }
+        const { rids } = await chrome.storage.local.get('rids');
+        
+        if (!rids || rids.length === 0) {
+            alert('Нет сохраненных RID значений');
+            return;
+        }
 
-            isInserting = true;
-            shouldCancelInsertion = false;
-            progressContainer.classList.add('visible');
-            progressBar.style.width = '0%';
-            progressText.textContent = `Вставка RID: 0/${rids.length}`;
+        isInserting = true;
+        shouldCancelInsertion = false;
+        
+        // Улучшенное отображение прогресса
+        progressContainer.classList.add('visible');
+        progressBar.style.width = '0%';
+        progressText.innerHTML = `
+            <div class="progress-info">
+                <span class="progress-status">Подготовка к вставке...</span>
+                <span class="progress-numbers">0/${rids.length}</span>
+            </div>
+        `;
+        
+        // Добавляем время начала
+        const startTime = Date.now();
+        
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: async (ridsArray) => {
+                const inputs = document.querySelectorAll('input.input-element');
+                const input = Array.from(inputs).find(input => {
+                    const prevLabel = input.previousElementSibling;
+                    return prevLabel && prevLabel.textContent.toLowerCase().includes('rid');
+                }) || inputs[2];
 
-            await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: async (ridsArray) => {
-                    const inputs = document.querySelectorAll('input.input-element');
-                    const input = Array.from(inputs).find(input => {
-                        const prevLabel = input.previousElementSibling;
-                        return prevLabel && prevLabel.textContent.toLowerCase().includes('rid');
-                    }) || inputs[2];
+                if (!input) {
+                    throw new Error('Не найдено поле для вставки RID значений');
+                }
 
-                    if (!input) {
-                        throw new Error('Не найдено поле для вставки RID значений');
+                let insertedCount = 0;
+                let errorCount = 0;
+                
+                for (const rid of ridsArray) {
+                    // Проверяем флаг отмены
+                    const shouldCancel = await new Promise(resolve => {
+                        chrome.runtime.sendMessage({ type: 'checkCancellation' }, response => {
+                            resolve(response.shouldCancel);
+                        });
+                    });
+
+                    if (shouldCancel) {
+                        throw new Error('Операция отменена пользователем');
                     }
 
-                    let insertedCount = 0;
-                    for (const rid of ridsArray) {
-                        // Проверяем флаг отмены через сообщение от popup
-                        const shouldCancel = await new Promise(resolve => {
-                            chrome.runtime.sendMessage({ type: 'checkCancellation' }, response => {
-                                resolve(response.shouldCancel);
-                            });
-                        });
-
-                        if (shouldCancel) {
-                            throw new Error('Операция отменена пользователем');
-                        }
-
+                    try {
                         input.value = '';
                         input.dispatchEvent(new Event('input', { bubbles: true }));
                         input.value = rid;
@@ -500,77 +531,95 @@ document.addEventListener('DOMContentLoaded', function() {
                         ];
 
                         enterKeyEvents.forEach(event => input.dispatchEvent(event));
-
                         insertedCount++;
-                        // Отправляем прогресс обратно в popup
-                        chrome.runtime.sendMessage({ 
-                            type: 'updateProgress', 
-                            progress: (insertedCount / ridsArray.length) * 100,
-                            current: insertedCount,
-                            total: ridsArray.length
-                        });
-
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    } catch (error) {
+                        errorCount++;
+                        console.error(`Ошибка при вставке RID ${rid}:`, error);
                     }
-                },
-                args: [rids]
-            });
 
-            // После успешной вставки
-            ridInput.value = '';
-            await chrome.storage.local.remove('inputText');
+                    // Отправляем расширенную информацию о прогрессе
+                    chrome.runtime.sendMessage({ 
+                        type: 'updateProgress', 
+                        progress: (insertedCount / ridsArray.length) * 100,
+                        current: insertedCount,
+                        total: ridsArray.length,
+                        errors: errorCount,
+                        currentRid: rid
+                    });
+
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                return { insertedCount, errorCount };
+            },
+            args: [rids]
+        }).then(results => {
+            const { insertedCount: current, errorCount: errors } = results[0].result;
+            const total = rids.length;
             
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Произошла ошибка: ' + error.message);
-        } finally {
-            isInserting = false;
+            // Показываем итоговую статистику и сообщение о завершении
+            const endTime = Date.now();
+            const duration = Math.round((endTime - startTime) / 1000);
+            
+            progressText.innerHTML = `
+                <div class="progress-info">
+                    <span class="progress-status">✅ Готово! Вставлено за ${duration} сек</span>
+                    <span class="progress-numbers">${current}/${total} ${errors > 0 ? `(${errors} ошибок)` : ''}</span>
+                </div>
+                <div class="completion-message">
+                    <p>Все RID успешно обработаны! 🎉</p>
+                    <p>Не забудьте добавить:</p>
+                    <ul>
+                        <li>✔️ Ссылку на оплату</li>
+                        <li>✔️ И конечно же ЛК</li>
+                    </ul>
+                    <p class="thank-you">SupportMate всегда на страже! 🛡️</p>
+                    <p class="support-text">Ваш надёжный помощник в работе 💪</p>
+                </div>
+            `;
+            
+            // Очищаем поле ввода и сохраненные RID
+            ridInput.value = '';
+            chrome.storage.local.remove(['inputText', 'rids']);
+            
+            // Увеличиваем время отображения до 40 секунд
             setTimeout(() => {
                 progressContainer.classList.remove('visible');
                 progressBar.style.width = '0%';
-            }, 2000);
-        }
-    });
-
-    // Обработка сообщений от content script
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.type === 'checkCancellation') {
-            sendResponse({ shouldCancel: shouldCancelInsertion });
-        } else if (message.type === 'updateProgress') {
-            progressBar.style.width = `${message.progress}%`;
-            progressText.textContent = `Вставка RID: ${message.current}/${message.total}`;
-        }
-        return true;
-    });
-
-    // Инициализация изменения размера окна
-    const resizeHandle = document.querySelector('.resize-handle');
-    let isResizing = false;
-    let startWidth, startHeight, startX, startY;
-
-    resizeHandle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        startWidth = document.body.offsetWidth;
-        startHeight = document.body.offsetHeight;
-        startX = e.clientX;
-        startY = e.clientY;
-
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', () => {
-            isResizing = false;
-            document.removeEventListener('mousemove', handleMouseMove);
+                savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
+            }, 40000); // 40 секунд
         });
-    });
-
-    function handleMouseMove(e) {
-        if (!isResizing) return;
-
-        const newWidth = startWidth + (e.clientX - startX);
-        const newHeight = startHeight + (e.clientY - startY);
-
-        document.body.style.width = `${Math.min(Math.max(newWidth, 400), 800)}px`;
-        document.body.style.height = `${Math.min(Math.max(newHeight, 300), 800)}px`;
+    } catch (error) {
+        console.error('Ошибка:', error);
+        progressText.innerHTML = `
+            <div class="progress-info">
+                <span class="progress-status error">Ошибка: ${error.message}</span>
+            </div>
+        `;
+    } finally {
+        isInserting = false;
     }
+});
+
+// Обработка сообщений о прогрессе
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'checkCancellation') {
+        sendResponse({ shouldCancel: shouldCancelInsertion });
+    } else if (message.type === 'updateProgress') {
+        progressBar.style.width = `${message.progress}%`;
+        
+        // Расширенное отображение прогресса
+        progressText.innerHTML = `
+            <div class="progress-info">
+                <span class="progress-status">
+                    Обработка: ${message.currentRid}
+                    ${message.errors > 0 ? `<span class="error">(Ошибок: ${message.errors})</span>` : ''}
+                </span>
+                <span class="progress-numbers">${message.current}/${message.total}</span>
+            </div>
+        `;
+    }
+    return true;
 });
 
 // Функция для обновления счетчика результатов
@@ -666,4 +715,168 @@ function showUpdateDialog(updateInfo) {
     document.getElementById('updateLater').addEventListener('click', () => {
         dialog.classList.remove('visible');
     });
-} 
+}
+
+// Функции для работы с настройками
+function initializeSettings() {
+    const settingsButton = document.getElementById('settingsButton');
+    const settingsPanel = document.querySelector('.settings-panel');
+    const settingsClose = document.querySelector('.settings-close');
+    const fontSizeSlider = document.getElementById('fontSizeSlider');
+    const fontSizeValue = document.getElementById('fontSizeValue');
+    const fontFamilySelect = document.getElementById('fontFamilySelect');
+    const boldText = document.getElementById('boldText');
+    const italicText = document.getElementById('italicText');
+    const windowSizeValue = document.getElementById('windowSizeValue');
+    const resizeHandle = document.querySelector('.resize-handle');
+
+    // Загружаем сохраненные настройки
+    chrome.storage.local.get(['fontSize', 'fontFamily', 'textStyle', 'windowSize'], function(result) {
+        // Размер текста
+        if (result.fontSize) {
+            updateFontSize(result.fontSize);
+            fontSizeSlider.value = result.fontSize;
+            fontSizeValue.textContent = `${result.fontSize}px`;
+        }
+        
+        // Шрифт
+        if (result.fontFamily) {
+            fontFamilySelect.value = result.fontFamily;
+            document.body.style.fontFamily = result.fontFamily;
+        }
+
+        // Стили текста
+        if (result.textStyle) {
+            boldText.checked = result.textStyle.includes('bold');
+            italicText.checked = result.textStyle.includes('italic');
+            updateTextStyle();
+        }
+        
+        // Размер окна
+        if (result.windowSize) {
+            document.body.style.width = result.windowSize.width;
+            document.body.style.height = result.windowSize.height;
+            updateWindowSizeDisplay();
+        }
+    });
+
+    // Обработчики для панели настроек
+    settingsButton.addEventListener('click', () => {
+        settingsPanel.classList.add('active');
+    });
+
+    settingsClose.addEventListener('click', () => {
+        settingsPanel.classList.remove('active');
+    });
+
+    // Обработчик клика вне панели настроек
+    document.addEventListener('click', (e) => {
+        if (settingsPanel.classList.contains('active') && 
+            !settingsPanel.contains(e.target) && 
+            !settingsButton.contains(e.target)) {
+            settingsPanel.classList.remove('active');
+        }
+    });
+
+    // Обработчик изменения размера текста
+    fontSizeSlider.addEventListener('input', (e) => {
+        const size = e.target.value;
+        updateFontSize(size);
+        fontSizeValue.textContent = `${size}px`;
+        chrome.storage.local.set({ fontSize: size });
+    });
+
+    // Обработчики стилей текста
+    fontFamilySelect.addEventListener('change', (e) => {
+        const fontFamily = e.target.value;
+        document.body.style.fontFamily = fontFamily;
+        chrome.storage.local.set({ fontFamily });
+    });
+
+    boldText.addEventListener('change', updateTextStyle);
+    italicText.addEventListener('change', updateTextStyle);
+
+    // Обработчик изменения размера окна
+    let isResizing = false;
+    let originalWidth;
+    let originalHeight;
+    let originalMouseX;
+    let originalMouseY;
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        originalWidth = document.body.offsetWidth;
+        originalHeight = document.body.offsetHeight;
+        originalMouseX = e.pageX;
+        originalMouseY = e.pageY;
+        
+        document.addEventListener('mousemove', handleResize);
+        document.addEventListener('mouseup', stopResize);
+    });
+
+    function handleResize(e) {
+        if (!isResizing) return;
+
+        const width = originalWidth + (e.pageX - originalMouseX);
+        const height = originalHeight + (e.pageY - originalMouseY);
+
+        const newWidth = Math.min(Math.max(width, 400), 800);
+        const newHeight = Math.min(Math.max(height, 300), 800);
+
+        document.body.style.width = `${newWidth}px`;
+        document.body.style.height = `${newHeight}px`;
+
+        updateWindowSizeDisplay();
+
+        chrome.storage.local.set({
+            windowSize: {
+                width: `${newWidth}px`,
+                height: `${newHeight}px`
+            }
+        });
+    }
+
+    function stopResize() {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleResize);
+        document.removeEventListener('mouseup', stopResize);
+    }
+
+    function updateWindowSizeDisplay() {
+        const width = document.body.offsetWidth;
+        const height = document.body.offsetHeight;
+        windowSizeValue.textContent = `${width} x ${height}`;
+    }
+}
+
+// Функция обновления размера текста
+function updateFontSize(size) {
+    const elements = document.querySelectorAll('.problem-title, .problem-content, .problem-requirements, #ridInput');
+    elements.forEach(element => {
+        element.style.fontSize = `${size}px`;
+    });
+}
+
+// Функция обновления стиля текста
+function updateTextStyle() {
+    const boldText = document.getElementById('boldText');
+    const italicText = document.getElementById('italicText');
+    const elements = document.querySelectorAll('.problem-title, .problem-content, .problem-requirements');
+    
+    const styles = [];
+    if (boldText.checked) styles.push('bold');
+    if (italicText.checked) styles.push('italic');
+
+    elements.forEach(element => {
+        element.style.fontWeight = boldText.checked ? 'bold' : 'normal';
+        element.style.fontStyle = italicText.checked ? 'italic' : 'normal';
+    });
+
+    chrome.storage.local.set({ textStyle: styles });
+}
+
+// Инициализируем настройки при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSettings();
+});
+})

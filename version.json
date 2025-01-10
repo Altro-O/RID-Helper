@@ -1,5 +1,5 @@
 {
-  "version": "1.0.5",
-  "download_url": "https://github.com/Altro-O/RID-Helper/archive/refs/tags/v1.0.5.zip",
-  "changes": "- Тестовое обновление для проверки системы уведомлений\n- Улучшена стабильность работы\n- Мелкие исправления"
+  "version": "1.0.6",
+  "changes": "- Улучшен поиск, визуальные изменения",
+  "download_url": "https://github.com/Altro-O/RID-Helper/archive/refs/tags/v1.0.6.zip"
 } 
