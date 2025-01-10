@@ -18,15 +18,18 @@ chrome.runtime.onStartup.addListener(() => {
 
 async function checkForUpdates() {
   try {
-    const response = await fetch('https://raw.githubusercontent.com/Altro-O/RID-Helper/main/manifest.json');
-    const remoteManifest = await response.json();
+    const response = await fetch('https://raw.githubusercontent.com/Altro-O/RID-Helper/main/version.json');
+    const data = await response.json();
     const currentVersion = chrome.runtime.getManifest().version;
     
-    if (remoteManifest.version > currentVersion) {
-      // Отправляем сообщение в popup о доступном обновлении
-      chrome.runtime.sendMessage({
-        type: 'updateAvailable',
-        version: remoteManifest.version
+    if (data.version > currentVersion) {
+      // Сохраняем информацию об обновлении
+      chrome.storage.local.set({ 
+        updateInfo: {
+          version: data.version,
+          downloadUrl: data.download_url,
+          changes: data.changes
+        }
       });
       
       // Показываем уведомление
@@ -34,7 +37,7 @@ async function checkForUpdates() {
         type: 'basic',
         iconUrl: 'icon.png',
         title: 'Доступно обновление RID Helper',
-        message: `Доступна новая версия ${remoteManifest.version}. Нажмите, чтобы обновить.`
+        message: `Доступна версия ${data.version}. Нажмите, чтобы обновить.`
       });
     }
   } catch (error) {
@@ -44,5 +47,6 @@ async function checkForUpdates() {
 
 // Обработка клика по уведомлению
 chrome.notifications.onClicked.addListener(() => {
-  chrome.runtime.requestUpdateCheck();
+  // Открываем popup с информацией об обновлении
+  chrome.action.openPopup();
 }); 

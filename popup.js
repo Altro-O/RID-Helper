@@ -633,4 +633,33 @@ style.textContent = `
         background: #d97706;
     }
 `;
-document.head.appendChild(style); 
+document.head.appendChild(style);
+
+// Проверяем наличие обновления при открытии
+chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
+    if (updateInfo) {
+        showUpdateDialog(updateInfo);
+    }
+});
+
+function showUpdateDialog(updateInfo) {
+    const dialog = document.getElementById('updateDialog');
+    const changes = document.getElementById('updateChanges');
+    
+    changes.textContent = updateInfo.changes || 'Доступна новая версия расширения';
+    dialog.classList.add('visible');
+
+    // Обработка кнопок
+    document.getElementById('updateNow').addEventListener('click', () => {
+        // Открываем ссылку на скачивание
+        chrome.tabs.create({ url: updateInfo.downloadUrl });
+        // Открываем страницу расширений
+        chrome.tabs.create({ url: 'chrome://extensions/' });
+        // Скрываем диалог
+        dialog.classList.remove('visible');
+    });
+
+    document.getElementById('updateLater').addEventListener('click', () => {
+        dialog.classList.remove('visible');
+    });
+} 
