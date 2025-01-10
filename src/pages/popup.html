@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>RID Helper</title>
+    <style>
+        body {
+            width: 300px;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+        }
+
+        .menu-item {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .menu-item:hover {
+            background-color: #e0e0e0;
+        }
+
+        .menu-item.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .version {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button id="ridHelper" class="menu-item">RID Helper</button>
+    <button id="knowledgeBase" class="menu-item">База знаний</button>
+    
+    <div class="version">Версия: 1.1</div>
+
+    <script type="module" src="../services/popup.js"></script>
+</body>
+</html> 

@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "RID Helper",
+  "version": "1.0",
+  "description": "Помощник для работы с RID и поиска по базе проблем",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "web_accessible_resources": [{
+    "resources": ["problems.json"],
+    "matches": ["<all_urls>"]
+  }],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+} 
