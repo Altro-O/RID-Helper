@@ -139,6 +139,18 @@ fetch(chrome.runtime.getURL('problems.json'))
 // Инициализация интерфейса
 async function initializeInterface() {
     try {
+        // Проверяем наличие обновления
+        chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
+            if (updateInfo && updateInfo.showNotification) {
+                const updateDialog = document.getElementById('updateDialog');
+                const updateChanges = document.getElementById('updateChanges');
+                if (updateDialog && updateChanges) {
+                    updateChanges.textContent = updateInfo.changes;
+                    updateDialog.classList.add('visible');
+                }
+            }
+        });
+
         initializeCategories();
         initializeSearch();
         initializeQueryChips();
@@ -803,5 +815,28 @@ document.addEventListener('DOMContentLoaded', function() {
         if (resultsCount) {
             resultsCount.textContent = `Найдено: ${visibleCount}`;
         }
+    }
+
+    // Обработчики для кнопок обновления
+    const updateNowButton = document.getElementById('updateNow');
+    const updateLaterButton = document.getElementById('updateLater');
+    const updateDialog = document.getElementById('updateDialog');
+
+    if (updateNowButton) {
+        updateNowButton.addEventListener('click', () => {
+            chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
+                if (updateInfo && updateInfo.downloadUrl) {
+                    chrome.tabs.create({ url: updateInfo.downloadUrl });
+                }
+            });
+        });
+    }
+
+    if (updateLaterButton) {
+        updateLaterButton.addEventListener('click', () => {
+            if (updateDialog) {
+                updateDialog.classList.remove('visible');
+            }
+        });
     }
 });
