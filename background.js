@@ -23,64 +23,91 @@ chrome.runtime.onStartup.addListener(() => {
   checkForUpdates();
 });
 
+// Функция для проверки обновлений
 async function checkForUpdates() {
-  console.log('Checking for updates...');
-  try {
-    const response = await fetch('https://raw.githubusercontent.com/Altro-O/RID-Helper/main/version.json');
-    const data = await response.json();
-    const currentVersion = chrome.runtime.getManifest().version;
-    console.log('Current version:', currentVersion);
-    console.log('Latest version:', data.version);
-    
-    // Сравниваем версии как строки в формате x.y.z
-    const currentParts = currentVersion.split('.').map(Number);
-    const latestParts = data.version.split('.').map(Number);
-    
-    let hasUpdate = false;
-    for (let i = 0; i < 3; i++) {
-      if (latestParts[i] > currentParts[i]) {
-        hasUpdate = true;
-        break;
-      } else if (latestParts[i] < currentParts[i]) {
-        break;
-      }
-    }
-    
-    if (hasUpdate) {
-      console.log('Update available!');
-      // Сохраняем информацию об обновлении
-      chrome.storage.local.set({ 
-        updateInfo: {
-          version: data.version,
-          downloadUrl: data.download_url,
-          changes: data.changes,
-          showNotification: true
+    console.log('Checking for updates...');
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/Altro-O/RID-Helper/main/version.json');
+        const data = await response.json();
+        const currentVersion = chrome.runtime.getManifest().version;
+        console.log('Current version:', currentVersion);
+        console.log('Latest version:', data.version);
+        
+        // Сравниваем версии как строки в формате x.y.z
+        const currentParts = currentVersion.split('.').map(Number);
+        const latestParts = data.version.split('.').map(Number);
+        
+        let hasUpdate = false;
+        for (let i = 0; i < 3; i++) {
+            if (latestParts[i] > currentParts[i]) {
+                hasUpdate = true;
+                break;
+            } else if (latestParts[i] < currentParts[i]) {
+                break;
+            }
         }
-      });
-    } else {
-      console.log('No updates available');
-      chrome.storage.local.set({ 
-        updateInfo: {
-          showNotification: false
+        
+        if (hasUpdate) {
+            console.log('Update available!');
+            // Устанавливаем красный бейдж с восклицательным знаком
+            chrome.action.setBadgeText({ text: '!' });
+            chrome.action.setBadgeBackgroundColor({ color: '#EA4335' });
+            
+            // Сохраняем информацию об обновлении
+            chrome.storage.local.set({ 
+                updateInfo: {
+                    version: data.version,
+                    downloadUrl: data.download_url,
+                    changes: data.changes,
+                    showNotification: true
+                }
+            });
+
+            // Показываем уведомление
+            chrome.notifications.create('update-notification', {
+                type: 'basic',
+                iconUrl: 'icon48.png',
+                title: 'Доступно обновление',
+                message: `Доступна новая версия ${data.version}. Нажмите, чтобы обновить.`,
+                priority: 2
+            });
+        } else {
+            console.log('No updates available');
+            // Если обновлений нет, убираем бейдж
+            chrome.action.setBadgeText({ text: '' });
+            chrome.storage.local.set({ 
+                updateInfo: {
+                    showNotification: false
+                }
+            });
         }
-      });
+    } catch (error) {
+        console.error('Ошибка при проверке обновлений:', error);
     }
-  } catch (error) {
-    console.error('Error checking for updates:', error);
-  }
 }
 
-// Обработка клика по уведомлению
+// Проверяем обновления при запуске
+checkForUpdates();
+
+// Проверяем обновления каждый час
+chrome.alarms.create('updateCheck', { periodInMinutes: 60 });
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'updateCheck') {
+        checkForUpdates();
+    }
+});
+
+// Обработчик клика по уведомлению
 chrome.notifications.onClicked.addListener((notificationId) => {
-  console.log('Notification clicked:', notificationId);
-  if (notificationId === 'update-notification') {
-    // Открываем popup с информацией об обновлении
-    chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
-      if (updateInfo && updateInfo.downloadUrl) {
-        chrome.tabs.create({ url: updateInfo.downloadUrl });
-      }
-    });
-  }
+    console.log('Notification clicked:', notificationId);
+    if (notificationId === 'update-notification') {
+        // Открываем popup с информацией об обновлении
+        chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
+            if (updateInfo && updateInfo.downloadUrl) {
+                chrome.tabs.create({ url: updateInfo.downloadUrl });
+            }
+        });
+    }
 });
 
 // Обработчик сообщений
