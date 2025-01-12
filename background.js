@@ -81,4 +81,73 @@ chrome.notifications.onClicked.addListener((notificationId) => {
       }
     });
   }
-}); 
+});
+
+// Обработчик сообщений
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    switch (request.action) {
+        case 'checkUpdate':
+            checkForUpdates().then(sendResponse);
+            return true;
+        case 'getSettings':
+            getSettings().then(sendResponse);
+            return true;
+        case 'sendTelegramFeedback':
+            sendTelegramFeedback(request.feedback).then(sendResponse);
+            return true;
+    }
+});
+
+// Отправка отзыва в Telegram
+async function sendTelegramFeedback(feedback) {
+    const BOT_TOKEN = '8166900887:AAGDiYGDLIHaonG85mdeg-RcyJY_ebSgzDI';
+    const CHAT_ID = '-1002390424799';
+    
+    const message = `
+📝 *Новый отзыв*
+
+*Тип:* ${feedback.type}
+*Версия:* ${feedback.version}
+*Дата:* ${new Date(feedback.timestamp).toLocaleString('ru-RU')}
+
+*Сообщение:*
+${feedback.text}
+
+*Техническая информация:*
+\`${feedback.userAgent}\`
+    `.trim();
+
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Telegram API error: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Feedback sent to Telegram:', result);
+        
+        // Отправляем уведомление об успешной отправке
+        chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icons/icon48.png',
+            title: 'Отзыв отправлен',
+            message: 'Спасибо за ваш отзыв! Мы обязательно его рассмотрим.'
+        });
+
+        return result;
+    } catch (error) {
+        console.error('Error sending feedback to Telegram:', error);
+        throw error;
+    }
+} 
