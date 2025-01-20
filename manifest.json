@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SupportMate",
-  "version": "1.0.9",
+  "version": "1.0.11",
   "description": "Ваш надёжный помощник в работе службы поддержки. Быстрый поиск по базе проблем, работа с RID и многое другое.",
   "permissions": [
     "storage",
