@@ -325,6 +325,7 @@ button:active {
     max-height: 150px;
     overflow-y: auto;
     line-height: 1.5;
+    margin-top: 12px;
 }
 
 /* Индикатор прогресса */
@@ -452,4 +453,69 @@ button:active {
     color: #047857 !important;
     margin-top: 8px !important;
     font-size: 13px;
+}
+
+.copy-rids {
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    min-width: auto;
+}
+
+.copy-rids:hover {
+    background: var(--hover-color);
+    transform: translateY(-1px);
+}
+
+.copy-rids svg {
+    width: 14px;
+    height: 14px;
+}
+
+.clear-input {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.9;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.clear-input:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.clear-input svg {
+    width: 16px;
+    height: 16px;
+    color: var(--primary-color);
+    filter: saturate(1.2);
+}
+
+.rid-input {
+    padding-right: 32px;
+}
+
+.rid-input-wrapper {
+    position: relative;
+    width: 100%;
 } 

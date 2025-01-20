@@ -426,9 +426,43 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateSavedRidsDisplay(rids) {
         if (rids && rids.length > 0) {
             savedRidsDiv.innerHTML = `
-                <strong>Сохраненные RID значения (${rids.length}):</strong><br>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong>Сохраненные RID значения (${rids.length}):</strong>
+                    <button class="action-button copy-rids">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
+                        Копировать
+                    </button>
+                </div>
                 ${rids.join('<br>')}
             `;
+
+            // Добавляем обработчик для кнопки копирования
+            const copyButton = savedRidsDiv.querySelector('.copy-rids');
+            copyButton.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(rids.join('\n'));
+                    copyButton.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Скопировано
+                    `;
+                    setTimeout(() => {
+                        copyButton.innerHTML = `
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                            </svg>
+                            Копировать
+                        `;
+                    }, 2000);
+                } catch (error) {
+                    console.error('Ошибка при копировании:', error);
+                }
+            });
         } else {
             savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
         }
@@ -838,5 +872,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateDialog.classList.remove('visible');
             }
         });
+    }
+
+    // Обработчик для кнопки очистки поля ввода
+    const clearInputButton = document.querySelector('.clear-input');
+    
+    if (clearInputButton && ridInput) {
+        // Функция для обновления видимости кнопки очистки
+        const updateClearButtonVisibility = () => {
+            const hasText = ridInput.value && ridInput.value.trim().length > 0;
+            clearInputButton.style.display = hasText ? 'flex' : 'none';
+        };
+
+        clearInputButton.addEventListener('click', () => {
+            ridInput.value = '';
+            ridInput.focus();
+            updateClearButtonVisibility();
+        });
+        
+        // Показываем/скрываем кнопку очистки при вводе
+        ridInput.addEventListener('input', updateClearButtonVisibility);
+        
+        // Проверяем наличие текста при загрузке страницы
+        updateClearButtonVisibility();
+        
+        // Обновляем видимость кнопки при получении фокуса
+        ridInput.addEventListener('focus', updateClearButtonVisibility);
+    }
+});
+
+// Функция для открытия страницы расширений
+function openExtensionsPage() {
+    chrome.tabs.create({ url: 'chrome://extensions' });
+}
+
+// При клике на кнопку обновления
+document.getElementById('updateNow').addEventListener('click', function() {
+    // Скачиваем новую версию
+    chrome.downloads.download({
+        url: updateInfo.downloadUrl,
+        filename: 'RID-Helper.zip'
+    }, () => {
+        // Показываем уведомление
+        chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icons/icon48.png',
+            title: 'Обновление загружено',
+            message: 'Перейдите в chrome://extensions/ для установки обновления',
+            buttons: [{ title: 'Открыть страницу расширений' }]
+        });
+    });
+});
+
+// Обработчик клика по уведомлению
+chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+    if (buttonIndex === 0) {
+        openExtensionsPage();
     }
 });

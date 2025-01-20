@@ -466,7 +466,14 @@
         </div>
 
         <div id="ridsTab" class="tab-content">
-    <textarea id="ridInput" placeholder="Вставьте JSON с RID значениями или список RID (каждый RID с новой строки)"></textarea>
+            <div class="rid-input-wrapper">
+                <textarea id="ridInput" class="rid-input" placeholder="Вставьте текст для извлечения RID"></textarea>
+                <button class="clear-input" title="Очистить">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
             <div class="button-group">
                 <button id="extractRids">Извлечь RID</button>
                 <button id="insertRids">Вставить RID</button>
@@ -478,8 +485,8 @@
                     <span class="progress-cancel" id="cancelProgress">Отменить</span>
                 </div>
             </div>
-    <div id="savedRids"></div>
-  </div>
+            <div id="savedRids"></div>
+        </div>
     </div>
 
     <div class="footer">
