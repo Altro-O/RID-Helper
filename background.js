@@ -57,7 +57,7 @@ async function checkForUpdates() {
             chrome.storage.local.set({ 
                 updateInfo: {
                     version: data.version,
-                    downloadUrl: data.downloadUrl,
+                    downloadUrl: data.download_url,
                     changes: data.changes,
                     showNotification: true
                 }
