@@ -857,12 +857,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const updateDialog = document.getElementById('updateDialog');
 
     if (updateNowButton) {
-        updateNowButton.addEventListener('click', () => {
-            chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
+        updateNowButton.addEventListener('click', async () => {
+            try {
+                const { updateInfo } = await chrome.storage.local.get('updateInfo');
                 if (updateInfo && updateInfo.downloadUrl) {
-                    chrome.tabs.create({ url: updateInfo.downloadUrl });
+                    // Скачиваем новую версию
+                    await chrome.downloads.download({
+                        url: updateInfo.downloadUrl,
+                        filename: 'RID-Helper.zip'
+                    });
+                    
+                    // Показываем уведомление
+                    chrome.notifications.create({
+                        type: 'basic',
+                        iconUrl: 'icons/icon48.png',
+                        title: 'Обновление загружено',
+                        message: 'Перейдите в chrome://extensions/ для установки обновления',
+                        buttons: [{ title: 'Открыть страницу расширений' }]
+                    });
+
+                    // Открываем страницу расширений
+                    chrome.tabs.create({ url: 'chrome://extensions' });
                 }
-            });
+            } catch (error) {
+                console.error('Ошибка при обновлении:', error);
+            }
         });
     }
 

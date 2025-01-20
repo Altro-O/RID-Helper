@@ -57,7 +57,7 @@ async function checkForUpdates() {
             chrome.storage.local.set({ 
                 updateInfo: {
                     version: data.version,
-                    downloadUrl: data.download_url,
+                    downloadUrl: data.downloadUrl,
                     changes: data.changes,
                     showNotification: true
                 }
@@ -66,7 +66,7 @@ async function checkForUpdates() {
             // Показываем уведомление
             chrome.notifications.create('update-notification', {
                 type: 'basic',
-                iconUrl: 'icon48.png',
+                iconUrl: 'icons/icon48.png',
                 title: 'Доступно обновление',
                 message: `Доступна новая версия ${data.version}. Нажмите, чтобы обновить.`,
                 priority: 2
