@@ -1,7 +1,114 @@
+import './src/services/transactionSearch.js';
+
 let db;
 let currentFilter = '';
 let isInserting = false;
 let shouldCancelInsertion = false;
+
+// Проверяем, первый ли это запуск
+chrome.storage.local.get(['isFirstRun', 'userName'], function(result) {
+    if (result.isFirstRun === undefined) {
+        // Первый запуск
+        showOnboarding();
+        chrome.storage.local.set({ isFirstRun: false });
+    } else if (result.userName) {
+        // Показываем приветствие
+        showWelcomeMessage(result.userName);
+    }
+});
+
+function showOnboarding() {
+    const dialog = document.getElementById('onboardingDialog');
+    dialog.classList.add('visible');
+    // Показываем первый шаг
+    showStep(1);
+}
+
+function showStep(step) {
+    console.log('Показываем шаг:', step);
+    
+    // Скрываем все шаги
+    document.querySelectorAll('.onboarding-step').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Показываем нужный шаг
+    const currentStep = document.querySelector(`.onboarding-step[data-step="${step}"]`);
+    if (currentStep) {
+        currentStep.style.display = 'block';
+    }
+    
+    // Обновляем прогресс
+    document.querySelectorAll('.progress-dot').forEach(dot => {
+        dot.classList.remove('active');
+    });
+    const currentDot = document.querySelector(`.progress-dot[data-step="${step}"]`);
+    if (currentDot) {
+        currentDot.classList.add('active');
+    }
+}
+
+function nextStep(currentStep) {
+    console.log('nextStep вызван с шагом:', currentStep);
+    
+    if (currentStep === 1) {
+        const userName = document.getElementById('userName').value.trim();
+        console.log('Введенное имя:', userName);
+        
+        if (!userName) {
+            console.log('Имя не введено');
+            const input = document.getElementById('userName');
+            input.classList.add('error');
+            input.placeholder = 'Пожалуйста, введите ваше имя';
+            
+            // Добавляем анимацию тряски
+            input.style.animation = 'shake 0.5s ease';
+            setTimeout(() => {
+                input.style.animation = '';
+                input.classList.remove('error');
+            }, 500);
+            return;
+        }
+        
+        console.log('Сохраняем имя:', userName);
+        chrome.storage.local.set({ userName: userName }, () => {
+            console.log('Имя сохранено, переходим к шагу 2');
+            showStep(2);
+        });
+    } else if (currentStep === 4) {
+        console.log('Последний шаг, закрываем онбординг');
+        const dialog = document.getElementById('onboardingDialog');
+        dialog.classList.remove('visible');
+        
+        chrome.storage.local.get(['userName'], function(result) {
+            if (result.userName) {
+                showWelcomeMessage(result.userName);
+            }
+        });
+    } else {
+        console.log('Переходим к следующему шагу:', currentStep + 1);
+        showStep(currentStep + 1);
+    }
+}
+
+function showWelcomeMessage(name) {
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const currentHour = new Date().getHours();
+    let greeting;
+    
+    if (currentHour < 6) {
+        greeting = 'Доброй ночи';
+    } else if (currentHour < 12) {
+        greeting = 'Доброе утро';
+    } else if (currentHour < 18) {
+        greeting = 'Добрый день';
+    } else {
+        greeting = 'Добрый вечер';
+    }
+    
+    welcomeMessage.textContent = `${greeting}, ${name}! 👋`;
+    welcomeMessage.style.display = 'block';
+}
 
 // Статистика использования
 class UsageStats {
@@ -158,6 +265,29 @@ async function initializeInterface() {
         // Показываем все проблемы при старте
         const results = db.search('');
         await displayResults(results);
+
+        // Инициализируем табы
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                
+                // Убираем активный класс со всех табов
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Скрываем все контенты табов
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                
+                // Показываем нужный контент
+                const content = document.getElementById(`${tabName}Tab`);
+                if (content) {
+                    content.style.display = 'block';
+                }
+            });
+        });
     } catch (error) {
         console.error('Ошибка инициализации интерфейса:', error);
         document.getElementById('resultsContainer').innerHTML = 
@@ -388,6 +518,35 @@ async function displayResults(results) {
 
 // Инициализация работы с RID
 document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем обработчики для кнопок онбординга
+    const secondStepButton = document.getElementById('secondStepButton');
+    const thirdStepButton = document.getElementById('thirdStepButton');
+    const fourthStepButton = document.getElementById('fourthStepButton');
+
+    if (secondStepButton) {
+        secondStepButton.addEventListener('click', () => {
+            console.log('Нажата кнопка второго шага');
+            nextStep(2);
+        });
+    }
+
+    if (thirdStepButton) {
+        thirdStepButton.addEventListener('click', () => {
+            console.log('Нажата кнопка третьего шага');
+            nextStep(3);
+        });
+    }
+
+    if (fourthStepButton) {
+        fourthStepButton.addEventListener('click', () => {
+            console.log('Нажата кнопка четвертого шага');
+            nextStep(4);
+        });
+    }
+
+    // Делаем функцию nextStep глобальной
+    window.nextStep = nextStep;
+
     // Инициализация вкладок
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(tab => {
@@ -481,39 +640,8 @@ document.addEventListener('DOMContentLoaded', function() {
         await chrome.storage.local.set({ rids });
         updateSavedRidsDisplay(rids);
         
-        // Создаем и показываем уведомление
-        const notification = document.createElement('div');
-        notification.className = 'notification-dialog';
-        notification.innerHTML = `
-            <div class="notification-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                Оповещение расширения «SupportMate»
-            </div>
-            <div class="notification-content">
-                Найдено ${rids.length} RID ${rids.length === 1 ? 'значение' : rids.length < 5 ? 'значения' : 'значений'}
-            </div>
-            <div class="notification-actions">
-                <button class="notification-button">OK</button>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Добавляем обработчик для кнопки
-        const okButton = notification.querySelector('.notification-button');
-        okButton.addEventListener('click', () => {
-            notification.remove();
-        });
-        
-        // Автоматически скрываем уведомление через 3 секунды
-        setTimeout(() => {
-            if (document.body.contains(notification)) {
-                notification.remove();
-            }
-        }, 3000);
+        // Показываем уведомление
+        showNotification(`Найдено ${rids.length} RID ${rids.length === 1 ? 'значение' : rids.length < 5 ? 'значения' : 'значений'}`);
     });
 
     const progressContainer = document.getElementById('progressContainer');
@@ -918,6 +1046,26 @@ document.addEventListener('DOMContentLoaded', function() {
         // Обновляем видимость кнопки при получении фокуса
         ridInput.addEventListener('focus', updateClearButtonVisibility);
     }
+
+    // Добавляем обработчик события для кнопки первого шага
+    const firstStepButton = document.getElementById('firstStepButton');
+    if (firstStepButton) {
+        firstStepButton.addEventListener('click', function() {
+            console.log('Кнопка нажата');
+            nextStep(1);
+        });
+    }
+
+    // Добавляем обработчик для поля ввода имени (отправка по Enter)
+    const userNameInput = document.getElementById('userName');
+    if (userNameInput) {
+        userNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                console.log('Нажат Enter в поле ввода');
+                nextStep(1);
+            }
+        });
+    }
 });
 
 // Функция для открытия страницы расширений
@@ -949,3 +1097,45 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
         openExtensionsPage();
     }
 });
+
+// Добавляем стили для анимации тряски
+const style = document.createElement('style');
+style.textContent = `
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.error {
+    border-color: #dc3545 !important;
+    animation: shake 0.5s ease;
+}
+
+.onboarding-input::placeholder {
+    color: #dc3545;
+}
+`;
+document.head.appendChild(style);
+
+function showNotification(message, type = 'success') {
+    // Удаляем предыдущее уведомление, если оно есть
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
+    // Создаем новое уведомление
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // Удаляем уведомление через 3 секунды
+    setTimeout(() => {
+        notification.style.animation = 'fadeOut 0.3s ease forwards';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
