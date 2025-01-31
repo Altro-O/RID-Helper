@@ -83,6 +83,8 @@ async function checkForUpdates() {
         }
     } catch (error) {
         console.error('Ошибка при проверке обновлений:', error);
+        // Возвращаем информацию об ошибке
+        return { error: error.message };
     }
 }
 

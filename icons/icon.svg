@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Фон -->
+    <rect width="128" height="128" rx="24" fill="#1a73e8"/>
+    
+    <!-- Градиент -->
+    <defs>
+        <linearGradient id="paint0_linear" x1="64" y1="0" x2="64" y2="128" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#4285f4"/>
+            <stop offset="1" stop-color="#1a73e8"/>
+        </linearGradient>
+    </defs>
+    
+    <!-- Буква S -->
+    <path d="M85 45C85 35 77 27 67 27H47C37 27 29 35 29 45C29 54.5 36.5 62 46 62H67C72 62 76 66 76 71C76 76 72 80 67 80H47C42 80 38 76 38 71M46 92H67C77 92 85 84 85 74"
+          stroke="white" 
+          stroke-width="12" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+          
+    <!-- Декоративные элементы -->
+    <circle cx="64" cy="64" r="54" stroke="white" stroke-width="2" stroke-dasharray="4 4" opacity="0.3"/>
+    <circle cx="64" cy="64" r="60" stroke="white" stroke-width="1" stroke-dasharray="2 2" opacity="0.2"/>
+</svg> 

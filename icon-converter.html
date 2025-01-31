@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Converter</title>
+    <style>
+        body { 
+            background: #f0f0f0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .preview {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+            background: white;
+        }
+        .error {
+            color: red;
+            padding: 10px;
+            margin: 10px 0;
+            background: #fff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview">
+        <h2>Предпросмотр иконок</h2>
+        <canvas id="icon16" width="16" height="16"></canvas>
+        <canvas id="icon32" width="32" height="32"></canvas>
+        <canvas id="icon48" width="48" height="48"></canvas>
+        <canvas id="icon128" width="128" height="128"></canvas>
+    </div>
+
+    <script>
+        const sizes = [16, 32, 48, 128];
+        
+        function drawIcon(size) {
+            const canvas = document.getElementById(`icon${size}`);
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            
+            img.onload = () => {
+                console.log(`Изображение ${size}x${size} загружено`);
+                
+                // Используем более качественный алгоритм сглаживания
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                // Очищаем канвас
+                ctx.clearRect(0, 0, size, size);
+                
+                // Рисуем изображение
+                ctx.drawImage(img, 0, 0, size, size);
+                
+                // Сохраняем PNG
+                const link = document.createElement('a');
+                link.download = `icon${size}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            
+            img.onerror = (error) => {
+                console.error('Ошибка загрузки:', error);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = `Ошибка загрузки изображения размера ${size}x${size}. Путь: ${img.src}`;
+                document.body.appendChild(errorDiv);
+            };
+            
+            // Загружаем изображение с точным путем
+            img.src = 'icons/0e68ab59-9664-400a-a7b2-a29c7480e750.jpg';
+        }
+
+        // Создаем все размеры иконок
+        sizes.forEach(size => drawIcon(size));
+    </script>
+</body>
+</html> 

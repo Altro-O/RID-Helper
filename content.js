@@ -66,5 +66,51 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       alert('Произошла ошибка при вставке RID значений');
     }
   }
+
+  if (request.action === 'extractRidsFromPage') {
+    try {
+      console.log('Ищем RID для transaction_id:', request.intId);
+      
+      // Получаем весь текст страницы
+      const pageText = document.body.innerText;
+      const lines = pageText.split('\n');
+      
+      // Ищем строку с нужным transaction_id
+      const line = lines.find(line => line.includes(request.intId));
+      console.log('Найдена строка:', line);
+      
+      if (!line) {
+        console.log('Строка с transaction_id не найдена');
+        sendResponse({ success: false, message: 'Transaction ID не найден' });
+        return;
+      }
+      
+      // Ищем все RID в строке
+      const ridPattern = /"rid":"([^"]+)"/g;
+      const rids = [];
+      let match;
+      
+      while ((match = ridPattern.exec(line)) !== null) {
+        rids.push(match[1]);
+      }
+      
+      console.log('Найдены RID:', rids);
+      
+      // Сохраняем RID в storage и отправляем ответ
+      chrome.storage.local.set({ rids }, () => {
+        console.log('RID сохранены в storage');
+        sendResponse({ 
+          success: true, 
+          message: `Найдено ${rids.length} RID значений`,
+          rids: rids 
+        });
+      });
+    } catch (error) {
+      console.error('Ошибка при поиске RID:', error);
+      sendResponse({ success: false, message: error.message });
+    }
+    return true;
+  }
+
   return true;
 }); 

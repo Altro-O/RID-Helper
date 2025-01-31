@@ -1,10 +1,8 @@
 import './src/services/transactionSearch.js';
-
 let db;
 let currentFilter = '';
 let isInserting = false;
 let shouldCancelInsertion = false;
-
 // Проверяем, первый ли это запуск
 chrome.storage.local.get(['isFirstRun', 'userName'], function(result) {
     if (result.isFirstRun === undefined) {
@@ -16,28 +14,23 @@ chrome.storage.local.get(['isFirstRun', 'userName'], function(result) {
         showWelcomeMessage(result.userName);
     }
 });
-
 function showOnboarding() {
     const dialog = document.getElementById('onboardingDialog');
     dialog.classList.add('visible');
     // Показываем первый шаг
     showStep(1);
 }
-
 function showStep(step) {
     console.log('Показываем шаг:', step);
-    
     // Скрываем все шаги
     document.querySelectorAll('.onboarding-step').forEach(el => {
         el.style.display = 'none';
     });
-    
     // Показываем нужный шаг
     const currentStep = document.querySelector(`.onboarding-step[data-step="${step}"]`);
     if (currentStep) {
         currentStep.style.display = 'block';
     }
-    
     // Обновляем прогресс
     document.querySelectorAll('.progress-dot').forEach(dot => {
         dot.classList.remove('active');
@@ -47,14 +40,11 @@ function showStep(step) {
         currentDot.classList.add('active');
     }
 }
-
 function nextStep(currentStep) {
     console.log('nextStep вызван с шагом:', currentStep);
-    
     if (currentStep === 1) {
         const userName = document.getElementById('userName').value.trim();
         console.log('Введенное имя:', userName);
-        
         if (!userName) {
             console.log('Имя не введено');
             const input = document.getElementById('userName');
@@ -69,7 +59,6 @@ function nextStep(currentStep) {
             }, 500);
             return;
         }
-        
         console.log('Сохраняем имя:', userName);
         chrome.storage.local.set({ userName: userName }, () => {
             console.log('Имя сохранено, переходим к шагу 2');
@@ -90,12 +79,10 @@ function nextStep(currentStep) {
         showStep(currentStep + 1);
     }
 }
-
 function showWelcomeMessage(name) {
     const welcomeMessage = document.getElementById('welcomeMessage');
     const currentHour = new Date().getHours();
     let greeting;
-    
     if (currentHour < 6) {
         greeting = 'Доброй ночи';
     } else if (currentHour < 12) {
@@ -105,54 +92,9 @@ function showWelcomeMessage(name) {
     } else {
         greeting = 'Добрый вечер';
     }
-    
     welcomeMessage.textContent = `${greeting}, ${name}! 👋`;
     welcomeMessage.style.display = 'block';
 }
-
-// Статистика использования
-class UsageStats {
-    constructor() {
-        this.stats = {
-            timeSaved: 0,
-            problemsProcessed: 0,
-            ridsUsed: 0,
-            lastUpdate: Date.now()
-        };
-        this.loadStats();
-    }
-
-    async loadStats() {
-        const { usageStats } = await chrome.storage.local.get('usageStats');
-        if (usageStats) {
-            this.stats = usageStats;
-        }
-    }
-
-    async saveStats() {
-        await chrome.storage.local.set({ usageStats: this.stats });
-        this.updateDisplay();
-    }
-
-    updateDisplay() {
-        document.getElementById('timeSaved').textContent = `${Math.round(this.stats.timeSaved)} мин`;
-        document.getElementById('problemsProcessed').textContent = this.stats.problemsProcessed;
-        document.getElementById('ridsUsed').textContent = this.stats.ridsUsed;
-    }
-
-    async addProblemProcessed() {
-        this.stats.problemsProcessed++;
-        this.stats.timeSaved += 2; // Предполагаем, что каждая проблема экономит 2 минуты
-        await this.saveStats();
-    }
-
-    async addRidUsed() {
-        this.stats.ridsUsed++;
-        this.stats.timeSaved += 0.5; // Предполагаем, что каждый RID экономит 30 секунд
-        await this.saveStats();
-    }
-}
-
 // Подсказки и релевантность
 class SearchSuggestions {
     constructor(problems) {
@@ -220,7 +162,6 @@ class SearchSuggestions {
 }
 
 // Инициализация
-const stats = new UsageStats();
 let suggestions;
 
 // Обновляем инициализацию базы проблем
@@ -562,98 +503,81 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Инициализация работы с RID
-    const ridInput = document.getElementById('ridInput');
-    const extractButton = document.getElementById('extractRids');
+    const linkInput = document.getElementById('linkInput');
+    const extractFromLinkButton = document.getElementById('extractFromLink');
     const insertButton = document.getElementById('insertRids');
     const savedRidsDiv = document.getElementById('savedRids');
-
-    // Восстанавливаем сохраненный текст при открытии
-    chrome.storage.local.get(['inputText', 'rids'], ({ inputText, rids }) => {
-        if (inputText) {
-            ridInput.value = inputText;
-        }
-        if (rids && rids.length > 0) {
-            updateSavedRidsDisplay(rids);
-        }
-    });
-
-    // Сохраняем текст при каждом изменении
-    ridInput.addEventListener('input', async () => {
-        await chrome.storage.local.set({ inputText: ridInput.value });
-    });
-
-    function updateSavedRidsDisplay(rids) {
-        if (rids && rids.length > 0) {
-            savedRidsDiv.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <strong>Сохраненные RID значения (${rids.length}):</strong>
-                    <button class="action-button copy-rids">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                        </svg>
-                        Копировать
-                    </button>
-                </div>
-                ${rids.join('<br>')}
-            `;
-
-            // Добавляем обработчик для кнопки копирования
-            const copyButton = savedRidsDiv.querySelector('.copy-rids');
-            copyButton.addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(rids.join('\n'));
-                    copyButton.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        Скопировано
-                    `;
-                    setTimeout(() => {
-                        copyButton.innerHTML = `
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                            </svg>
-                            Копировать
-                        `;
-                    }, 2000);
-                } catch (error) {
-                    console.error('Ошибка при копировании:', error);
-                }
-            });
-        } else {
-            savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
-        }
-    }
-
-    extractButton.addEventListener('click', async () => {
-        const text = ridInput.value;
-        const ridPattern = /"rid"\s*:\s*"?([^,"}\s]+)"?/g;
-        const rids = [];
-        let match;
-
-        while ((match = ridPattern.exec(text)) !== null) {
-            rids.push(match[1]);
-        }
-
-        await chrome.storage.local.set({ rids });
-        updateSavedRidsDisplay(rids);
-        
-        // Показываем уведомление
-        showNotification(`Найдено ${rids.length} RID ${rids.length === 1 ? 'значение' : rids.length < 5 ? 'значения' : 'значений'}`);
-    });
-
+    const clearLinkButton = linkInput.nextElementSibling;
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     const cancelProgress = document.getElementById('cancelProgress');
 
-    cancelProgress.addEventListener('click', () => {
-        shouldCancelInsertion = true;
-        progressText.textContent = 'Отмена...';
+    let isInserting = false;
+    let shouldCancelInsertion = false;
+
+    // Восстанавливаем сохраненные RID при открытии
+    chrome.storage.local.get(['rids'], ({ rids }) => {
+        if (rids && rids.length > 0) {
+            updateSavedRidsDisplay(rids);
+        }
     });
 
+    // Обработчик для кнопки извлечения RID из страницы
+    if (extractFromLinkButton) {
+        extractFromLinkButton.addEventListener('click', async () => {
+            const transactionId = linkInput.value.trim();
+            if (!transactionId) {
+                showNotification('Пожалуйста, введите transaction_id');
+                return;
+            }
+
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (!tab) {
+                    showNotification('Не удалось получить активную вкладку');
+                    return;
+                }
+
+                // Показываем индикатор загрузки
+                extractFromLinkButton.disabled = true;
+                extractFromLinkButton.innerHTML = `
+                    <div class="spinner"></div>
+                    Извлечение...
+                `;
+
+                // Отправляем сообщение в content script
+                const response = await chrome.tabs.sendMessage(tab.id, {
+                    action: 'extractRidsFromPage',
+                    intId: transactionId
+                });
+
+                if (response && response.success) {
+                    // Сохраняем найденные RID
+                    await chrome.storage.local.set({ rids: response.rids });
+                    updateSavedRidsDisplay(response.rids);
+                    showNotification(response.message);
+                } else {
+                    showNotification(response.message || 'RID не найдены');
+                }
+
+            } catch (error) {
+                console.error('Ошибка при извлечении RID:', error);
+                showNotification('Ошибка при извлечении RID');
+            } finally {
+                // Восстанавливаем кнопку
+                extractFromLinkButton.disabled = false;
+                extractFromLinkButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Извлечь данные
+                `;
+            }
+        });
+    }
+
+    // Обработчик для кнопки вставки RID
     insertButton.addEventListener('click', async () => {
         try {
             if (isInserting) {
@@ -677,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
             isInserting = true;
             shouldCancelInsertion = false;
             
-            // Улучшенное отображение прогресса
+            // Показываем прогресс
             progressContainer.classList.add('visible');
             progressBar.style.width = '0%';
             progressText.innerHTML = `
@@ -687,7 +611,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            // Добавляем время начала
             const startTime = Date.now();
             
             await chrome.scripting.executeScript({
@@ -707,7 +630,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     let errorCount = 0;
                     
                     for (const rid of ridsArray) {
-                        // Проверяем флаг отмены
                         const shouldCancel = await new Promise(resolve => {
                             chrome.runtime.sendMessage({ type: 'checkCancellation' }, response => {
                                 resolve(response.shouldCancel);
@@ -740,7 +662,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.error(`Ошибка при вставке RID ${rid}:`, error);
                         }
 
-                        // Отправляем расширенную информацию о прогрессе
                         chrome.runtime.sendMessage({ 
                             type: 'updateProgress', 
                             progress: (insertedCount / ridsArray.length) * 100,
@@ -763,7 +684,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Показываем итоговую статистику и сообщение о завершении
                 const endTime = Date.now();
                 const duration = Math.round((endTime - startTime) / 1000);
-                
                 progressText.innerHTML = `
                     <div class="progress-info">
                         <span class="progress-status">✅ Готово! Вставлено за ${duration} сек</span>
@@ -781,17 +701,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
                 
-                // Очищаем поле ввода и сохраненные RID
-                ridInput.value = '';
-                chrome.storage.local.remove(['inputText', 'rids']);
+                // Очищаем сохраненные RID
+                chrome.storage.local.remove(['rids']);
                 
-                // Увеличиваем время отображения до 40 секунд
+                // Скрываем прогресс через 40 секунд
                 setTimeout(() => {
                     progressContainer.classList.remove('visible');
                     progressBar.style.width = '0%';
                     savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
                 }, 40000); // 40 секунд
             });
+
         } catch (error) {
             console.error('Ошибка:', error);
             progressText.innerHTML = `
@@ -804,14 +724,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Обработчик для кнопки отмены
+    cancelProgress.addEventListener('click', () => {
+        shouldCancelInsertion = true;
+        progressText.textContent = 'Отмена...';
+    });
+
+    // Обработчик для кнопки очистки поля
+    if (clearLinkButton && linkInput) {
+        const updateClearButtonVisibility = () => {
+            const hasText = linkInput.value && linkInput.value.trim().length > 0;
+            clearLinkButton.style.display = hasText ? 'flex' : 'none';
+        };
+
+        clearLinkButton.addEventListener('click', () => {
+            linkInput.value = '';
+            linkInput.focus();
+            updateClearButtonVisibility();
+        });
+
+        linkInput.addEventListener('input', updateClearButtonVisibility);
+        updateClearButtonVisibility();
+        linkInput.addEventListener('focus', updateClearButtonVisibility);
+    }
+
+    function updateSavedRidsDisplay(rids) {
+        if (rids && rids.length > 0) {
+            savedRidsDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong>Сохраненные RID значения (${rids.length}):</strong>
+                    <button class="action-button copy-rids">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
+                        Копировать
+                    </button>
+                </div>
+                ${rids.join('<br>')}
+            `;
+
+            const copyButton = savedRidsDiv.querySelector('.copy-rids');
+            copyButton.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(rids.join('\n'));
+                    copyButton.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Скопировано
+                    `;
+                    setTimeout(() => {
+                        copyButton.innerHTML = `
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                            </svg>
+                            Копировать
+                        `;
+                    }, 2000);
+                } catch (error) {
+                    console.error('Ошибка при копировании:', error);
+                }
+            });
+        } else {
+            savedRidsDiv.innerHTML = 'Нет сохраненных RID значений';
+        }
+    }
+
     // Обработка сообщений о прогрессе
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === 'checkCancellation') {
             sendResponse({ shouldCancel: shouldCancelInsertion });
         } else if (message.type === 'updateProgress') {
             progressBar.style.width = `${message.progress}%`;
-            
-            // Расширенное отображение прогресса
             progressText.innerHTML = `
                 <div class="progress-info">
                     <span class="progress-status">
@@ -1020,33 +1006,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
     // Обработчик для кнопки очистки поля ввода
     const clearInputButton = document.querySelector('.clear-input');
-    
-    if (clearInputButton && ridInput) {
+    if (clearInputButton && linkInput) {
         // Функция для обновления видимости кнопки очистки
         const updateClearButtonVisibility = () => {
-            const hasText = ridInput.value && ridInput.value.trim().length > 0;
+            const hasText = linkInput.value && linkInput.value.trim().length > 0;
             clearInputButton.style.display = hasText ? 'flex' : 'none';
         };
-
         clearInputButton.addEventListener('click', () => {
-            ridInput.value = '';
-            ridInput.focus();
+            linkInput.value = '';
+            linkInput.focus();
             updateClearButtonVisibility();
         });
-        
         // Показываем/скрываем кнопку очистки при вводе
-        ridInput.addEventListener('input', updateClearButtonVisibility);
-        
+        linkInput.addEventListener('input', updateClearButtonVisibility);
         // Проверяем наличие текста при загрузке страницы
         updateClearButtonVisibility();
-        
         // Обновляем видимость кнопки при получении фокуса
-        ridInput.addEventListener('focus', updateClearButtonVisibility);
+        linkInput.addEventListener('focus', updateClearButtonVisibility);
     }
-
     // Добавляем обработчик события для кнопки первого шага
     const firstStepButton = document.getElementById('firstStepButton');
     if (firstStepButton) {
@@ -1055,7 +1034,6 @@ document.addEventListener('DOMContentLoaded', function() {
             nextStep(1);
         });
     }
-
     // Добавляем обработчик для поля ввода имени (отправка по Enter)
     const userNameInput = document.getElementById('userName');
     if (userNameInput) {
@@ -1067,12 +1045,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
 // Функция для открытия страницы расширений
 function openExtensionsPage() {
     chrome.tabs.create({ url: 'chrome://extensions' });
 }
-
 // При клике на кнопку обновления
 document.getElementById('updateNow').addEventListener('click', function() {
     // Скачиваем новую версию
@@ -1090,14 +1066,12 @@ document.getElementById('updateNow').addEventListener('click', function() {
         });
     });
 });
-
 // Обработчик клика по уведомлению
 chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
     if (buttonIndex === 0) {
         openExtensionsPage();
     }
 });
-
 // Добавляем стили для анимации тряски
 const style = document.createElement('style');
 style.textContent = `
@@ -1106,36 +1080,62 @@ style.textContent = `
     25% { transform: translateX(-10px); }
     75% { transform: translateX(10px); }
 }
-
 .error {
     border-color: #dc3545 !important;
     animation: shake 0.5s ease;
 }
-
 .onboarding-input::placeholder {
     color: #dc3545;
 }
 `;
 document.head.appendChild(style);
-
-function showNotification(message, type = 'success') {
-    // Удаляем предыдущее уведомление, если оно есть
-    const existingNotification = document.querySelector('.notification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-
-    // Создаем новое уведомление
+function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
-    notification.className = 'notification';
+    notification.className = `notification ${type}`;
     notification.textContent = message;
     document.body.appendChild(notification);
 
-    // Удаляем уведомление через 3 секунды
     setTimeout(() => {
-        notification.style.animation = 'fadeOut 0.3s ease forwards';
+        notification.classList.add('show');
         setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }, 100);
 }
+// Функция для отображения найденных RID
+function displayFoundRids(rids) {
+    const container = document.getElementById('foundRids');
+    if (!container) return;
+    
+    if (!rids || rids.length === 0) {
+        container.innerHTML = 'RID не найдены';
+        return;
+    }
+    container.innerHTML = `
+        <div class="found-rids-header">
+            Найденные RID (${rids.length}):
+            <button class="copy-button" onclick="copyRids()">
+                Копировать
+            </button>
+        </div>
+        <div class="rid-list">
+            ${rids.map(rid => `<div class="rid-item">${rid}</div>`).join('')}
+        </div>
+    `;
+}
+// Функция для копирования RID
+function copyRids() {
+    const rids = Array.from(document.querySelectorAll('.rid-item'))
+        .map(item => item.textContent)
+        .join('\n');
+    
+    navigator.clipboard.writeText(rids);
+    showNotification('RID скопированы');
+}
+// Обработчик сообщений от content script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'foundRids') {
+        displayFoundRids(message.rids);
+    }
+});

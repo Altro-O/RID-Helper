@@ -9,152 +9,22 @@
     <link rel="stylesheet" href="styles/settings.css">
     <link rel="stylesheet" href="styles/dialogs.css">
   <style>
-        /* Временные стили для отладки */
-        .debug-styles-missing {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #ff5252;
-            color: white;
-            padding: 8px;
-            text-align: center;
-            z-index: 9999;
-            display: none;
-        }
-        .search-container {
-            position: relative;
-            margin-bottom: 12px;
-        }
-        .search-input {
-            width: 100%;
-            padding: 8px 16px 8px 40px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        .search-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            opacity: 0.6;
-        }
-        .search-input:not(:placeholder-shown) + .search-icon {
-            display: none;
-        }
-        .stats-container {
-            margin-top: 16px;
-            padding: 12px;
-      background: #f8f9fa;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #666;
-        }
-        .stats-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-        .stats-item:last-child {
-            margin-bottom: 0;
-        }
-        .stats-label {
-            color: #888;
-        }
-        .stats-value {
-            font-weight: 500;
-            color: #444;
-        }
-        .results-container {
-            margin-top: 8px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-        .categories-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-bottom: 12px;
-            padding: 0 2px;
-        }
-        
-        .category-chip {
-            font-size: 12px;
-            padding: 5px 12px;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
             background: #f8f9fa;
-            border: 1px solid #e8eaed;
-            border-radius: 14px;
-            color: #5f6368;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.02);
+            min-width: 400px;
         }
-        
-        .category-chip:hover {
-            background: #f1f3f4;
-            border-color: #dadce0;
-            color: #202124;
-        }
-        
-        .category-chip.active {
-            background: #e8f0fe;
-            color: #1967d2;
-            border-color: #d2e3fc;
-            font-weight: 500;
-        }
-
-        .tags-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-bottom: 8px;
-        }
-
-        .tag-chip {
-      font-size: 12px;
-            padding: 3px 8px;
-            background: #e8f0fe;
-            border: none;
-            border-radius: 12px;
-            color: #1967d2;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .tag-chip:hover {
-            background: #d2e3fc;
-        }
-
-        .results-header {
-            font-size: 13px;
-            color: #666;
-            margin: 8px 0;
-            padding: 0 4px;
-        }
-
-        .results-container {
-            margin-top: 8px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-            flex-grow: 1;
-      overflow-y: auto;
-    }
 
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 20px;
+            padding: 12px 16px;
             background: #1a73e8;
             color: white;
+            margin: 0;
         }
 
         .app-title {
@@ -167,7 +37,6 @@
             font-size: 17px;
             font-weight: 500;
             letter-spacing: 0.3px;
-            margin-right: 8px;
         }
 
         .title-badge {
@@ -177,120 +46,31 @@
             border-radius: 10px;
         }
 
-        .settings-button {
-            background: none;
-      border: none;
-      color: white;
-      cursor: pointer;
-            padding: 4px;
-            transition: opacity 0.2s ease;
-            opacity: 0.85;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .settings-button:hover {
-            opacity: 1;
-        }
-
-        .settings-button svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        .categories-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin: 12px;
-            padding: 0 2px;
-        }
-        
-        .category-chip {
-            font-size: 12px;
-            padding: 5px 12px;
-            background: #f8f9fa;
-            border: 1px solid #e8eaed;
-            border-radius: 14px;
-            color: #5f6368;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.02);
-        }
-        
-        .category-chip:hover {
-            background: #f1f3f4;
-            border-color: #dadce0;
-            color: #202124;
-        }
-        
-        .category-chip.active {
-            background: #e8f0fe;
-            color: #1967d2;
-            border-color: #d2e3fc;
-            font-weight: 500;
-        }
-
-        .results-container {
-            margin: 8px 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
+        .content-wrapper {
             background: white;
-            flex-grow: 1;
-      overflow-y: auto;
-    }
-
-        .search-container {
-            position: relative;
-            margin: 12px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 8px 16px 8px 40px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            opacity: 0.6;
-        }
-
-        .search-input:not(:placeholder-shown) + .search-icon {
-            display: none;
-        }
-
-        .results-header {
-            font-size: 13px;
-            color: #666;
-            margin: 8px 12px;
+            overflow: hidden;
         }
 
         .tab-container {
             display: flex;
-            gap: 16px;
-            padding: 0 16px;
-            margin-top: 4px;
+            gap: 12px;
+            padding: 0 12px;
+            margin-top: 0;
             border-bottom: 1px solid #e0e0e0;
         }
 
         .tab {
-            padding: 8px 16px;
+            padding: 8px 12px;
             color: #5f6368;
             cursor: pointer;
             position: relative;
             font-size: 14px;
             border-radius: 4px 4px 0 0;
+        }
+
+        .tab:hover:not(.active) {
+            color: #202124;
+            background: rgba(0, 0, 0, 0.03);
         }
 
         .tab.active {
@@ -302,13 +82,301 @@
             content: '';
             position: absolute;
             bottom: -1px;
-            left: 0;
-            right: 0;
+            left: 8px;
+            right: 8px;
             height: 2px;
             background: #1a73e8;
             border-radius: 2px;
-    }
-  </style>
+        }
+
+        .link-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .input-with-clear {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-with-clear .link-input {
+            width: 100%;
+            height: 32px;
+            padding: 0 32px 0 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+
+        .input-with-clear .link-input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+            outline: none;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 16px 16px;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .primary-button {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        .primary-button.blue {
+            background: #1a73e8;
+            box-shadow: 0 1px 2px rgba(26, 115, 232, 0.15);
+        }
+
+        .primary-button.blue:hover {
+            background: #1557b0;
+        }
+
+        .primary-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .primary-button.green {
+            background: #34a853;
+            box-shadow: 0 1px 2px rgba(52, 168, 83, 0.15);
+        }
+
+        .primary-button.green:hover {
+            background: #2d8745;
+            box-shadow: 0 1px 3px rgba(52, 168, 83, 0.25);
+        }
+
+        .error-search-container {
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            z-index: 10;
+        }
+
+        .error-search-input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #f8f9fa;
+            transition: all 0.2s ease;
+        }
+
+        .error-search-input:focus {
+            background: white;
+            border-color: #1a73e8;
+            box-shadow: 0 1px 2px rgba(26,115,232,0.15);
+            outline: none;
+        }
+
+        .error-item {
+            padding: 16px;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .error-item:last-child {
+            border-bottom: none;
+        }
+
+        .error-item:hover {
+            background: #fafafa;
+        }
+
+        .error-code {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 500;
+            color: #1a73e8;
+            margin-bottom: 8px;
+            padding: 4px 8px;
+            background: #e8f0fe;
+            border-radius: 4px;
+            font-size: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        .error-message {
+            color: #202124;
+            font-size: 13px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .error-description {
+            color: #5f6368;
+            font-size: 12px;
+            margin: 8px 0;
+            line-height: 1.4;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .error-action {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+        }
+
+        .error-action strong {
+            color: #1a73e8;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #errorResults {
+            max-height: 600px;
+            overflow-y: auto;
+            background: white;
+            scrollbar-width: thin;
+            scrollbar-color: #e0e0e0 transparent;
+        }
+
+        #errorResults::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #errorResults::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #errorResults::-webkit-scrollbar-thumb {
+            background-color: #e0e0e0;
+            border-radius: 3px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 16px;
+            color: #5f6368;
+            font-size: 12px;
+        }
+
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .download-button {
+            width: 100%;
+            max-width: 320px;
+            height: 36px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .download-button:hover {
+            background: #1557b0;
+        }
+
+        .download-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .search-container {
+            position: relative;
+            margin: 8px 12px;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 1px 2px rgba(26,115,232,0.15);
+            outline: none;
+        }
+
+        .categories-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 12px 8px;
+        }
+
+        .category-chip {
+            font-size: 12px;
+            padding: 4px 12px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            color: #5f6368;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .category-chip:hover {
+            background: #f1f3f4;
+            color: #202124;
+        }
+
+        .category-chip.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+            border-color: #1a73e8;
+        }
+    </style>
 </head>
 <body>
     <div class="onboarding-dialog" id="onboardingDialog">
@@ -348,7 +416,7 @@
             </div>
             
             <div class="onboarding-step" data-step="4" style="display: none;">
-                <h2>💳 Поиск транзакций</h2>
+                <h2> Поиск транзакций</h2>
                 <p>Быстрый поиск информации по транзакциям и возвратам.</p>
                 <div class="feature-preview-container">
                     <div class="feature-preview active">
@@ -502,9 +570,10 @@
 
 
     <div class="tabs">
-        <div class="tab active" data-tab="problems">Поиск проблем</div>
-        <div class="tab" data-tab="rids" style="margin-left: auto;">Работа с RID</div>
-        <div class="tab" data-tab="transactions" style="margin-left: auto;">Поиск транзакций</div>
+        <div class="tab" data-tab="problems">Поиск проблем</div>
+        <div class="tab" data-tab="rids">Работа с RID</div>
+        <div class="tab" data-tab="transactions">Поиск RRN</div>
+        <div class="tab" data-tab="errors">Ошибки оплаты</div>
     </div>
 
     <div class="content-wrapper">
@@ -518,7 +587,12 @@
             </div>
 
             <div id="categoriesContainer" class="categories-container">
-                <!-- Категории будут добавлены динамически -->
+                <div class="category-chip active">Все</div>
+                <div class="category-chip">Travel</div>
+                <div class="category-chip">WB Банк</div>
+                <div class="category-chip">Благодарности</div>
+                <div class="category-chip">Взаиморасчеты</div>
+                <div class="category-chip">Жалобы</div>
             </div>
 
             <div class="results-header">
@@ -531,17 +605,24 @@
         </div>
 
         <div id="ridsTab" class="tab-content">
-            <div class="rid-input-wrapper">
-                <textarea id="ridInput" class="rid-input" placeholder="Вставьте текст для извлечения RID"></textarea>
-                <button class="clear-input" title="Очистить">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            <div class="link-input-container">
+                <div class="input-with-clear">
+                    <input type="text" id="linkInput" class="link-input" placeholder="Вставьте transaction_id для автоматического извлечения">
+                    <button class="clear-input" title="Очистить">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <div class="button-group">
-                <button id="extractRids">Извлечь RID</button>
-                <button id="insertRids">Вставить RID</button>
+            <div class="button-container">
+                <button id="extractFromLink" class="primary-button blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Извлечь данные
+                </button>
+                <button id="insertRids" class="primary-button green">Вставить RID</button>
             </div>
             <div class="progress-container" id="progressContainer">
                 <div class="progress-bar" id="progressBar"></div>
@@ -556,8 +637,32 @@
         <div class="tab-content" id="transactionsTab" style="display: none;">
             <div class="transaction-search">
                 <input type="text" id="transactionInput" placeholder="Введите номер транзакции (int_transaction)">
+                <button class="clear-input" title="Очистить">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
             <div id="transactionInfo"></div>
+        </div>
+
+        <div class="tab-content" id="ridTab">
+            <div id="foundRids" class="rid-container">
+                <!-- Здесь будут отображаться найденные RID -->
+            </div>
+        </div>
+
+        <div id="errorsTab" class="tab-content">
+            <div class="error-search-container">
+                <input type="text" id="errorSearchInput" class="error-search-input" placeholder="Введите код ошибки или описание...">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+            <div id="errorResults" class="error-results">
+                <!-- Результаты поиска будут добавляться здесь динамически -->
+            </div>
         </div>
     </div>
 
@@ -653,6 +758,7 @@
     <script src="src/services/transactionSearch.js" type="module"></script>
     <script src="popup.js" type="module"></script>
     <script src="settings.js"></script>
+    <script src="errors.js"></script>
     <script>
         // Проверка загрузки стилей
         window.addEventListener('load', function() {

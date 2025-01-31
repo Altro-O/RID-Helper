@@ -1,10 +1,120 @@
+// Добавим логирование при загрузке скрипта
+console.log('RID Helper content script loaded');
+
+// Функция для ожидания появления элементов
+async function waitForElement(selector, timeout = 5000) {
+    const start = Date.now();
+    
+    while (Date.now() - start < timeout) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+            return elements;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error(`Элементы ${selector} не найдены в течение ${timeout}мс`);
+}
+
+// Функция для определения индексов колонок
+function findRidColumnIndexes() {
+    const headers = Array.from(document.querySelectorAll('th[role="columnheader"]'));
+    console.log('Найдены заголовки:', headers.map(h => h.textContent));
+    
+    let transactionIdIndex = -1;
+    let metaRidsIndex = -1;
+    
+    // Ищем последнее вхождение нужных заголовков
+    headers.forEach((header, index) => {
+        const text = header.textContent.toLowerCase().replace(/\+$/, ''); // Убираем + в конце
+        if (text === 'transaction_id') {
+            transactionIdIndex = index;
+        }
+        if (text === 'meta_rids') {
+            metaRidsIndex = index;
+        }
+    });
+    
+    console.log('Найдены финальные индексы:', { transactionIdIndex, metaRidsIndex });
+    return {
+        transactionId: transactionIdIndex,
+        metaRids: metaRidsIndex
+    };
+}
+
 // Слушаем сообщения от расширения
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('Получено сообщение в content script:', request);
+
     if (request.action === 'findTransaction') {
         const transaction = findTransactionInTable(request.transactionId);
         sendResponse(transaction);
     }
-    return true; // Важно для асинхронного ответа
+    if (request.action === 'extractDataFromPage') {
+        extractDataFromPage(request.url).then(sendResponse);
+        return true;
+    }
+    if (request.action === 'extractRidsFromPage') {
+        try {
+            const transactionId = request.intId;
+            console.log('Ищем RID для транзакции:', transactionId);
+            
+            // Ищем все строки на странице
+            const pageText = document.body.innerText;
+            
+            // Ищем строку с нужным transaction_id
+            const lines = pageText.split('\n');
+            const targetLine = lines.find(line => line.includes(transactionId));
+            
+            if (!targetLine) {
+                console.log('Строка с транзакцией не найдена');
+                sendResponse({ 
+                    success: true, 
+                    rids: [],
+                    message: 'RID значения не найдены'
+                });
+                return true;
+            }
+            
+            console.log('Найдена строка:', targetLine);
+            
+            // Ищем все RID в строке
+            const rids = new Set();
+            const ridPattern = /"rid"\s*:\s*"([^"]+)"/g;
+            let match;
+            
+            while ((match = ridPattern.exec(targetLine)) !== null) {
+                const rid = match[1];
+                console.log('Найден RID:', rid);
+                rids.add(rid);
+            }
+            
+            const uniqueRids = Array.from(rids);
+            console.log('Найдены RID:', uniqueRids);
+            
+            // Сохраняем RID в storage перед отправкой ответа
+            chrome.storage.local.set({ rids: uniqueRids }, () => {
+                console.log('RID сохранены в storage');
+                // Отправляем ответ
+                sendResponse({ 
+                    success: true, 
+                    rids: uniqueRids,
+                    message: uniqueRids.length > 0 ? 
+                        `Найдено ${uniqueRids.length} RID значений` : 
+                        'RID значения не найдены'
+                });
+            });
+            
+            return true; // Важно для асинхронного ответа
+        } catch (error) {
+            console.error('Ошибка при извлечении RID:', error);
+            sendResponse({ 
+                success: false, 
+                error: error.message 
+            });
+            return true;
+        }
+    }
+    return true;
 });
 
 function findTransactionInTable(transactionId) {

@@ -3,6 +3,12 @@
   "name": "SupportMate",
   "version": "1.1.0",
   "description": "Ваш надёжный помощник в работе службы поддержки. Быстрый поиск по базе проблем, работа с RID и многое другое.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": [
     "storage",
     "activeTab",
@@ -19,7 +25,13 @@
     "https://github.com/*"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "web_accessible_resources": [{
     "resources": [
