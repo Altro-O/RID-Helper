@@ -187,16 +187,26 @@ fetch(chrome.runtime.getURL('problems.json'))
 // Инициализация интерфейса
 async function initializeInterface() {
     try {
-        // Проверяем наличие обновления
-        chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
-            if (updateInfo && updateInfo.showNotification) {
-                const updateDialog = document.getElementById('updateDialog');
-                const updateChanges = document.getElementById('updateChanges');
-                if (updateDialog && updateChanges) {
-                    updateChanges.textContent = updateInfo.changes;
-                    updateDialog.classList.add('visible');
+        // Принудительно проверяем обновления при открытии попапа
+        chrome.runtime.sendMessage({ action: 'checkUpdate' }, (response) => {
+            chrome.storage.local.get('updateInfo', ({ updateInfo }) => {
+                if (updateInfo && updateInfo.showNotification) {
+                    const updateDialog = document.getElementById('updateDialog');
+                    const updateChanges = document.getElementById('updateChanges');
+                    const updateButton = document.getElementById('updateButton');
+                    
+                    if (updateDialog && updateChanges && updateButton) {
+                        updateChanges.textContent = updateInfo.changes;
+                        updateDialog.classList.add('visible');
+                        updateButton.disabled = false;
+                        updateButton.addEventListener('click', () => {
+                            if (updateInfo.downloadUrl) {
+                                chrome.tabs.create({ url: updateInfo.downloadUrl });
+                            }
+                        });
+                    }
                 }
-            }
+            });
         });
 
         initializeCategories();

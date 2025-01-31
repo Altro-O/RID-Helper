@@ -59,7 +59,8 @@ async function checkForUpdates() {
                     version: data.version,
                     downloadUrl: data.download_url,
                     changes: data.changes,
-                    showNotification: true
+                    showNotification: true,
+                    lastCheck: Date.now()
                 }
             });
 
@@ -71,19 +72,22 @@ async function checkForUpdates() {
                 message: `Доступна новая версия ${data.version}. Нажмите, чтобы обновить.`,
                 priority: 2
             });
+
+            return { hasUpdate: true, version: data.version };
         } else {
             console.log('No updates available');
             // Если обновлений нет, убираем бейдж
             chrome.action.setBadgeText({ text: '' });
             chrome.storage.local.set({ 
                 updateInfo: {
-                    showNotification: false
+                    showNotification: false,
+                    lastCheck: Date.now()
                 }
             });
+            return { hasUpdate: false };
         }
     } catch (error) {
         console.error('Ошибка при проверке обновлений:', error);
-        // Возвращаем информацию об ошибке
         return { error: error.message };
     }
 }

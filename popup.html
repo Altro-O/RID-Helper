@@ -670,27 +670,20 @@
         Created by <a href="https://t.me/Kravchenk0_official" target="_blank">@Kravchenk0_official</a>
     </div>
 
-    <div class="update-dialog" id="updateDialog">
-        <div class="update-content">
-            <div class="update-title">Доступно обновление</div>
-            <div class="update-changes" id="updateChanges"></div>
-            <div class="update-steps">
-                <div class="update-step">
-                    <div class="step-number">1</div>
-                    <div>Нажмите кнопку "Обновить сейчас" для загрузки новой версии</div>
-                </div>
-                <div class="update-step">
-                    <div class="step-number">2</div>
-                    <div>Перейдите в chrome://extensions/</div>
-                </div>
-                <div class="update-step">
-                    <div class="step-number">3</div>
-                    <div>Нажмите кнопку обновления или переустановите расширение</div>
-                </div>
-            </div>
-            <div class="update-buttons">
-                <button class="update-button update-now" id="updateNow">Обновить сейчас</button>
-                <button class="update-button update-later" id="updateLater">Позже</button>
+    <div id="updateDialog" class="dialog">
+        <div class="dialog-content">
+            <h2>Доступно обновление</h2>
+            <div id="updateChanges" class="update-changes"></div>
+            <div class="dialog-buttons">
+                <button id="updateButton" class="primary-button blue">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 2.5V11M8 11L4.5 7.5M8 11L11.5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Обновить
+                </button>
+                <button class="secondary-button" onclick="document.getElementById('updateDialog').classList.remove('visible')">
+                    Позже
+                </button>
             </div>
         </div>
     </div>
